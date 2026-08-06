@@ -146,6 +146,22 @@ static void php_llama_l2_normalize(float *v, int32_t n)
 	}
 }
 
+static void php_llama_embd_to_zval(const float *embd, int32_t dim, zval *return_vec)
+{
+	float *copy;
+	int32_t i;
+
+	copy = emalloc(sizeof(float) * (size_t)dim);
+	memcpy(copy, embd, sizeof(float) * (size_t)dim);
+	php_llama_l2_normalize(copy, dim);
+
+	array_init_size(return_vec, dim);
+	for (i = 0; i < dim; i++) {
+		add_next_index_double(return_vec, (double)copy[i]);
+	}
+	efree(copy);
+}
+
 static int php_llama_embed_text(php_llama_embed_object *intern, const char *text, size_t text_len, zval *return_vec)
 {
 	const struct llama_vocab *vocab;
@@ -228,22 +244,6 @@ static int php_llama_embed_text(php_llama_embed_object *intern, const char *text
 	php_llama_embd_to_zval(embd, dim, return_vec);
 	llama_batch_free(batch);
 	return SUCCESS;
-}
-
-static void php_llama_embd_to_zval(const float *embd, int32_t dim, zval *return_vec)
-{
-	float *copy;
-	int32_t i;
-
-	copy = emalloc(sizeof(float) * (size_t)dim);
-	memcpy(copy, embd, sizeof(float) * (size_t)dim);
-	php_llama_l2_normalize(copy, dim);
-
-	array_init_size(return_vec, dim);
-	for (i = 0; i < dim; i++) {
-		add_next_index_double(return_vec, (double)copy[i]);
-	}
-	efree(copy);
 }
 
 /**

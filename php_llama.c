@@ -174,6 +174,16 @@ static int php_llama_embed_text(php_llama_embed_object *intern, const char *text
 		return FAILURE;
 	}
 
+	{
+		int32_t n_ubatch = (int32_t)llama_n_ubatch(intern->ctx);
+		if (n_tokens > n_ubatch) {
+			efree(tokens);
+			zend_throw_exception_ex(zend_ce_exception, 0,
+				"LlamaEmbed: text too long (%d tokens, max %d)", n_tokens, n_ubatch);
+			return FAILURE;
+		}
+	}
+
 	llama_memory_clear(llama_get_memory(intern->ctx), true);
 
 	batch = llama_batch_init(n_tokens, 0, 1);

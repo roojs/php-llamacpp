@@ -240,8 +240,6 @@ static int php_llama_embed_text(php_llama_embed_object *intern, const char *text
 	llama_batch_free(batch);
 	return SUCCESS;
 }
-
-static void php_llama_embd_to_zval(const float *embd, int32_t dim, zval *return_vec)
 {
 	float *copy;
 	int32_t i;

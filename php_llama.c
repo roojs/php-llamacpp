@@ -68,11 +68,20 @@ static php_llama_embed_object *php_llama_embed_from_zend(zend_object *obj)
 	return intern;
 }
 
+/* Drop libllama/ggml stderr INFO spam; failures still throw PHP exceptions. */
+static void php_llama_log_quiet(enum ggml_log_level level, const char *text, void *user_data)
+{
+	(void)level;
+	(void)text;
+	(void)user_data;
+}
+
 static void php_llama_ensure_backend(void)
 {
 	if (php_llama_backend_ready) {
 		return;
 	}
+	llama_log_set(php_llama_log_quiet, NULL);
 	llama_backend_init();
 	php_llama_backend_ready = 1;
 }
@@ -387,6 +396,8 @@ static const zend_function_entry llama_functions[] = {
 PHP_MINIT_FUNCTION(llama)
 {
 	zend_class_entry ce;
+
+	llama_log_set(php_llama_log_quiet, NULL);
 
 	INIT_CLASS_ENTRY(ce, "LlamaEmbed", php_llama_embed_methods);
 	php_llama_embed_ce = zend_register_internal_class_ex(&ce, NULL);

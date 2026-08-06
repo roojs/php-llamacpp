@@ -16,7 +16,7 @@ static zend_object_handlers php_llama_embed_object_handlers;
 static int php_llama_backend_ready = 0;
 
 /* Max sequences packed into one llama_encode (align RAG array_chunk). */
-#define PHP_LLAMA_EMBED_SEQ_MAX 32
+#define PHP_LLAMA_EMBED_SEQ_MAX 96
 
 
 #define Z_LLAMA_EMBED_P(zv) php_llama_embed_fetch_object(Z_OBJ_P(zv))
@@ -513,9 +513,9 @@ PHP_METHOD(LlamaEmbed, load)
 	cparams = llama_context_default_params();
 	cparams.embeddings = true;
 	cparams.pooling_type = pooling;
-	cparams.n_batch = 4096;
-	cparams.n_ubatch = 4096;
-	cparams.n_ctx = 4096;
+	cparams.n_batch = 8192;
+	cparams.n_ubatch = 8192;
+	cparams.n_ctx = 8192;
 	cparams.n_seq_max = PHP_LLAMA_EMBED_SEQ_MAX;
 
 

@@ -527,6 +527,16 @@ PHP_METHOD(LlamaEmbed, load)
 		RETURN_THROWS();
 	}
 
+	if (intern->debug) {
+		fprintf(stderr,
+			"LlamaEmbed load: requested n_batch=%d n_ubatch=%d n_ctx=%d n_seq_max=%d; "
+			"actual n_batch=%u n_ubatch=%u n_ctx=%u n_seq_max=%u\n",
+			(int)cparams.n_batch, (int)cparams.n_ubatch, (int)cparams.n_ctx, (int)cparams.n_seq_max,
+			llama_n_batch(intern->ctx), llama_n_ubatch(intern->ctx),
+			llama_n_ctx(intern->ctx), llama_n_seq_max(intern->ctx));
+		fflush(stderr);
+	}
+
 	llama_set_embeddings(intern->ctx, true);
 
 	intern->dimension = llama_model_n_embd_out(intern->model);

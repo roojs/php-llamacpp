@@ -55,6 +55,7 @@ static zend_object *php_llama_embed_create_object(zend_class_entry *class_type)
 	intern->model = NULL;
 	intern->ctx = NULL;
 	intern->dimension = 0;
+	intern->debug = 0;
 	intern->std.handlers = &php_llama_embed_object_handlers;
 
 	return &intern->std;
@@ -127,6 +128,20 @@ static int32_t php_llama_parse_n_gpu_layers(zval *opts)
 		return 99;
 	}
 	return (int32_t)zval_get_long(z);
+}
+
+static int php_llama_parse_debug(zval *opts)
+{
+	zval *z;
+
+	if (!opts || Z_TYPE_P(opts) != IS_ARRAY) {
+		return 0;
+	}
+	z = zend_hash_str_find(Z_ARRVAL_P(opts), "debug", sizeof("debug") - 1);
+	if (!z) {
+		return 0;
+	}
+	return zend_is_true(z) ? 1 : 0;
 }
 
 static void php_llama_l2_normalize(float *v, int32_t n)
@@ -366,6 +381,11 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 			return FAILURE;
 		}
 
+		if (intern->debug) {
+			fprintf(stderr, "LlamaEmbed pack: n=%d tokens=%d\n", pack_n, pack_tokens);
+			fflush(stderr);
+		}
+
 		llama_memory_clear(llama_get_memory(intern->ctx), true);
 		batch = llama_batch_init(pack_tokens, 0, 1);
 		batch.n_tokens = pack_tokens;
@@ -481,6 +501,7 @@ PHP_METHOD(LlamaEmbed, load)
 
 	object_init_ex(return_value, php_llama_embed_ce);
 	intern = Z_LLAMA_EMBED_P(return_value);
+	intern->debug = php_llama_parse_debug(options);
 
 	intern->model = llama_model_load_from_file(ZSTR_VAL(path), mparams);
 	if (!intern->model) {

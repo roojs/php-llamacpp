@@ -24,6 +24,7 @@ typedef struct {
 	struct llama_model *model;
 	struct llama_context *ctx;
 	int32_t dimension;
+	int debug;
 	zend_object std;
 } php_llama_embed_object;
 

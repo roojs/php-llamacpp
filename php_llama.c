@@ -296,6 +296,8 @@ PHP_METHOD(LlamaEmbed, load)
 	cparams.n_batch = 2048;
 	cparams.n_ubatch = 2048;
 	cparams.n_ctx = 2048;
+	cparams.n_seq_max = PHP_LLAMA_EMBED_SEQ_MAX;
+
 
 	intern->ctx = llama_init_from_model(intern->model, cparams);
 	if (!intern->ctx) {

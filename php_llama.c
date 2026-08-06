@@ -536,7 +536,6 @@ PHP_METHOD(LlamaEmbed, embed)
 PHP_METHOD(LlamaEmbed, embedBatch)
 {
 	zval *texts;
-	zval *entry;
 	php_llama_embed_object *intern;
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -548,24 +547,9 @@ PHP_METHOD(LlamaEmbed, embedBatch)
 		RETURN_THROWS();
 	}
 
-	array_init(return_value);
-	ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(texts), entry) {
-		zval vec;
-		zend_string *s;
-
-		if (Z_TYPE_P(entry) != IS_STRING) {
-			zval_ptr_dtor(return_value);
-			zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed::embedBatch expects string[]");
-			RETURN_THROWS();
-		}
-		s = Z_STR_P(entry);
-		ZVAL_UNDEF(&vec);
-		if (php_llama_embed_text(intern, ZSTR_VAL(s), ZSTR_LEN(s), &vec) != SUCCESS) {
-			zval_ptr_dtor(return_value);
-			RETURN_THROWS();
-		}
-		add_next_index_zval(return_value, &vec);
-	} ZEND_HASH_FOREACH_END();
+	if (php_llama_embed_texts(intern, texts, return_value) != SUCCESS) {
+		RETURN_THROWS();
+	}
 }
 
 PHP_METHOD(LlamaEmbed, dimension)

@@ -31,9 +31,14 @@ foreach ($vec as $x) {
 }
 assert($sum > 0.9 && $sum < 1.1, 'L2-normalized roughly unit length');
 
-$batch = $e->embedBatch(array('hello', 'world'));
-assert(count($batch) === 2, 'embedBatch count');
-assert(count($batch[0]) === 1024 && count($batch[1]) === 1024, 'embedBatch dims');
+$batch = $e->embedBatch(array(
+    'hello', 'world', 'alpha', 'beta', 'gamma',
+    'delta', 'epsilon', 'zeta', 'eta', 'theta',
+));
+assert(count($batch) === 10, 'embedBatch count 10');
+assert(count($batch[0]) === 1024 && count($batch[9]) === 1024, 'embedBatch dims');
+/* packed batch should still differ by text */
+assert($batch[0] !== $batch[1], 'different texts → different vectors');
 
 $e->close();
 

@@ -283,9 +283,9 @@ PHP_METHOD(LlamaEmbed, load)
 	cparams = llama_context_default_params();
 	cparams.embeddings = true;
 	cparams.pooling_type = pooling;
-	cparams.n_batch = 512;
-	cparams.n_ubatch = 512;
-	cparams.n_ctx = 0;
+	cparams.n_batch = 2048;
+	cparams.n_ubatch = 2048;
+	cparams.n_ctx = 2048;
 
 	intern->ctx = llama_init_from_model(intern->model, cparams);
 	if (!intern->ctx) {

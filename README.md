@@ -1,15 +1,30 @@
-# php-llama — PHP Zend extension for local GGUF embeddings
+# php-llamacpp — PHP Zend extension for local GGUF embeddings
 
 Exposes `LlamaEmbed` (load / embed / embedBatch / dimension / close) via Debian `libllama`.
 
-Develop under `/home/press/php-llama` for now. Later copy into `gitlive/php-llama` when `git.roojs.com/php-llama` exists (same pattern as `php-fiass`).
+Sibling repo at `gitlive/php-llamacpp` (used by Translate RAG local embed).
 
 ## Prerequisites
 
-- PHP 8.4 dev headers (`php8.4-dev`)
-- `libllama0` / `libllama-dev` (and ggml backends) — see `OLLMchat/scripts/fetch-libllama.sh`
-- `ldconfig` already listing `/usr/lib/*/llama` (fetch script registers it)
-- `pkg-config` finds `llama.pc` under `/usr/lib/x86_64-linux-gnu/llama/pkgconfig`
+- PHP 8.4 dev headers (`php8.4-dev` or matching API version)
+- `build-essential`, `pkg-config`, `curl`
+- `libllama0` / `libllama-dev` (and ggml backends: vulkan, blas)
+
+On hosts where apt’s llama packages are too old or missing, install from Debian pools:
+
+```bash
+cd php-llamacpp
+./scripts/fetch-libllama.sh
+```
+
+That script downloads/installs `libggml*` + `libllama*` debs, skips HIP on ROCm, and registers `/usr/lib/*/llama` with `ldconfig`. Helper: `scripts/ci/debian-pool-deb.sh`.
+
+Optional (CLI smoke / `llama-server` only — not required to build this extension):
+
+```bash
+# match libllama version, e.g. from the same Debian llama.cpp pool
+# sudo dpkg -i llama.cpp-tools_….deb
+```
 
 Build on **each host** against that host’s PHP — do not copy `llama.so` between machines.
 
@@ -26,7 +41,7 @@ Example: `/home/press/Llama/models/bge-m3/bge-m3-q4_k_m.gguf`
 ## Build
 
 ```bash
-cd /home/press/php-llama
+cd php-llamacpp
 phpize
 export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/llama/pkgconfig
 ./configure --enable-llama
@@ -48,6 +63,8 @@ php -d extension=$PWD/modules/llama.so test_llama.php \
   /home/press/Llama/models/bge-m3/bge-m3-q4_k_m.gguf
 ```
 
+Restart php-fpm / Apache after enabling for those SAPIs.
+
 ## API
 
 ```php
@@ -63,6 +80,6 @@ $e->close();
 
 ## Notes
 
-- No RAG / MediaOutreach wiring in this phase — extension + smoke only.
+- Links against system `libllama` (`<llama.h>`); does not vendor llama.cpp sources.
 - Do not keep the model in MINIT globals; `close()` / object dtor frees model+context.
-- RAG wiring and corpus rebuild come in a later Translate RAG version.
+- RAG / MediaOutreach wiring is separate (Translate RAG plans).

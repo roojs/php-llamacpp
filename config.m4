@@ -23,5 +23,6 @@ if test "$PHP_LLAMA" != "no"; then
 
   dnl compile php_llama.c into a PHP extension named llama
   PHP_NEW_EXTENSION(llama, php_llama.c, $ext_shared)
+  dnl exports a shell variable from ./configure into the generated Makefile so the build system knows which library flags to use when compiling
   PHP_SUBST(LLAMA_SHARED_LIBADD)
 fi

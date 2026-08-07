@@ -5,6 +5,7 @@ PHP_ARG_ENABLE(
 )
 
 if test "$PHP_LLAMA" != "no"; then
+
   dnl Debian packages llama.pc under a private multiarch dir
   if test -d /usr/lib/x86_64-linux-gnu/llama/pkgconfig; then
     PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/llama/pkgconfig:${PKG_CONFIG_PATH}"
@@ -20,6 +21,7 @@ if test "$PHP_LLAMA" != "no"; then
   PHP_EVAL_INCLINE([$LLAMA_CFLAGS])
   PHP_EVAL_LIBLINE([$LLAMA_LIBS], [LLAMA_SHARED_LIBADD])
 
+  dnl compile php_llama.c into a PHP extension named llama
   PHP_NEW_EXTENSION(llama, php_llama.c, $ext_shared)
   PHP_SUBST(LLAMA_SHARED_LIBADD)
 fi

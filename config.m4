@@ -1,5 +1,8 @@
-PHP_ARG_ENABLE(llama, whether to enable llama embed support,
-[  --enable-llama           Enable LlamaEmbed (libllama) support])
+PHP_ARG_ENABLE(
+  llama, dnl extension name
+  whether to enable llama embed support, dnl text shown during ./configure
+  [  --enable-llama           Enable LlamaEmbed (libllama) support] dnl help text shown in ./configure --help
+)
 
 if test "$PHP_LLAMA" != "no"; then
   dnl Debian packages llama.pc under a private multiarch dir

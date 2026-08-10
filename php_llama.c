@@ -640,16 +640,6 @@ PHP_MSHUTDOWN_FUNCTION(llama)
 	return SUCCESS;
 }
 
-PHP_RINIT_FUNCTION(llama)
-{
-	return SUCCESS;
-}
-
-PHP_RSHUTDOWN_FUNCTION(llama)
-{
-	return SUCCESS;
-}
-
 PHP_MINFO_FUNCTION(llama)
 {
 	php_info_print_table_start();
@@ -664,8 +654,8 @@ zend_module_entry llama_module_entry = {
 	llama_functions,
 	PHP_MINIT(llama),
 	PHP_MSHUTDOWN(llama),
-	PHP_RINIT(llama),
-	PHP_RSHUTDOWN(llama),
+	NULL,
+	NULL,
 	PHP_MINFO(llama),
 	PHP_LLAMA_VERSION,
 	STANDARD_MODULE_PROPERTIES

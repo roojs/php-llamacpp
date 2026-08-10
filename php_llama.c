@@ -507,9 +507,9 @@ PHP_METHOD(LlamaEmbed, load)
 	cparams = llama_context_default_params();
 	cparams.embeddings = true;
 	cparams.pooling_type = pooling;
-	cparams.n_batch = 2048;
-	cparams.n_ubatch = 2048;
-	cparams.n_ctx = 2048;
+	cparams.n_batch = 4096;
+	cparams.n_ubatch = 4096;
+	cparams.n_ctx = 4096;
 	cparams.n_seq_max = PHP_LLAMA_EMBED_SEQ_MAX;
 
 

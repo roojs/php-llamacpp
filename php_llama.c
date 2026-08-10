@@ -311,8 +311,6 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 			}
 			efree(toks);
 			efree(n_toks);
-			zval_ptr_dtor(return_arr);
-			ZVAL_UNDEF(return_arr);
 			zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed::embedBatch expects string[]");
 			return FAILURE;
 		}
@@ -336,8 +334,6 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 			}
 			efree(toks);
 			efree(n_toks);
-			zval_ptr_dtor(return_arr);
-			ZVAL_UNDEF(return_arr);
 			zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed: tokenize failed");
 			return FAILURE;
 		}
@@ -347,8 +343,6 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 			}
 			efree(toks);
 			efree(n_toks);
-			zval_ptr_dtor(return_arr);
-			ZVAL_UNDEF(return_arr);
 			zend_throw_exception_ex(zend_ce_exception, 0,
 				"LlamaEmbed: text too long (%d tokens, max %d)", n_tokens, n_ubatch);
 			return FAILURE;
@@ -379,8 +373,6 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 			}
 			efree(toks);
 			efree(n_toks);
-			zval_ptr_dtor(return_arr);
-			ZVAL_UNDEF(return_arr);
 			zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed: cannot pack batch");
 			return FAILURE;
 		}
@@ -418,8 +410,6 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 			}
 			efree(toks);
 			efree(n_toks);
-			zval_ptr_dtor(return_arr);
-			ZVAL_UNDEF(return_arr);
 			zend_throw_exception_ex(zend_ce_exception, 0,
 				"LlamaEmbed: encode/decode failed (rc=%d)", rc);
 			return FAILURE;
@@ -441,8 +431,6 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 				}
 				efree(toks);
 				efree(n_toks);
-				zval_ptr_dtor(return_arr);
-				ZVAL_UNDEF(return_arr);
 				zend_throw_exception_ex(zend_ce_exception, 0,
 					"LlamaEmbed: missing embeddings for seq %d", s);
 				return FAILURE;

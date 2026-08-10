@@ -43,7 +43,6 @@ Example: `/home/press/Llama/models/bge-m3/bge-m3-q4_k_m.gguf`
 ```bash
 cd php-llamacpp
 phpize
-export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/llama/pkgconfig
 ./configure
 make -j$(nproc)
 ```

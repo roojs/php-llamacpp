@@ -423,7 +423,6 @@ PHP_METHOD(LlamaEmbed, load)
 	php_llama_embed_object *intern;
 	struct llama_model_params mparams;
 	struct llama_context_params cparams;
-	enum llama_pooling_type pooling = LLAMA_POOLING_TYPE_CLS;
 
 	ZEND_PARSE_PARAMETERS_START(1, 2)
 		Z_PARAM_STR(path)
@@ -446,18 +445,6 @@ PHP_METHOD(LlamaEmbed, load)
 		if (z) {
 			mparams.n_gpu_layers = (int32_t)zval_get_long(z);
 		}
-		z = zend_hash_str_find(Z_ARRVAL_P(options), "pooling", sizeof("pooling") - 1);
-		if (z && Z_TYPE_P(z) == IS_STRING) {
-			if (zend_string_equals_literal_ci(Z_STR_P(z), "mean")) {
-				pooling = LLAMA_POOLING_TYPE_MEAN;
-			}
-			if (zend_string_equals_literal_ci(Z_STR_P(z), "last")) {
-				pooling = LLAMA_POOLING_TYPE_LAST;
-			}
-			if (zend_string_equals_literal_ci(Z_STR_P(z), "none")) {
-				pooling = LLAMA_POOLING_TYPE_NONE;
-			}
-		}
 		z = zend_hash_str_find(Z_ARRVAL_P(options), "debug", sizeof("debug") - 1);
 		if (z) {
 			intern->debug = zend_is_true(z) ? 1 : 0;
@@ -473,12 +460,12 @@ PHP_METHOD(LlamaEmbed, load)
 
 	cparams = llama_context_default_params();
 	cparams.embeddings = true;
-	cparams.pooling_type = pooling;
+	/* GGUF/hparams only; no PHP override — missing metadata resolves to NONE */
+	cparams.pooling_type = LLAMA_POOLING_TYPE_UNSPECIFIED;
 	cparams.n_batch = 4096;
 	cparams.n_ubatch = 4096;
 	cparams.n_ctx = 4096;
 	cparams.n_seq_max = PHP_LLAMA_EMBED_SEQ_MAX;
-
 
 	intern->ctx = llama_init_from_model(intern->model, cparams);
 	if (!intern->ctx) {
@@ -488,10 +475,21 @@ PHP_METHOD(LlamaEmbed, load)
 		RETURN_THROWS();
 	}
 
+	if (llama_pooling_type(intern->ctx) == LLAMA_POOLING_TYPE_NONE) {
+		llama_free(intern->ctx);
+		intern->ctx = NULL;
+		llama_model_free(intern->model);
+		intern->model = NULL;
+		zend_throw_exception_ex(zend_ce_exception, 0,
+			"LlamaEmbed: model has no pooling_type in GGUF metadata");
+		RETURN_THROWS();
+	}
+
 	if (intern->debug) {
 		fprintf(stderr,
-			"LlamaEmbed load: requested n_batch=%d n_ubatch=%d n_ctx=%d n_seq_max=%d; "
+			"LlamaEmbed load: pooling=%d requested n_batch=%d n_ubatch=%d n_ctx=%d n_seq_max=%d; "
 			"actual n_batch=%u n_ubatch=%u n_ctx=%u n_seq_max=%u\n",
+			(int)llama_pooling_type(intern->ctx),
 			(int)cparams.n_batch, (int)cparams.n_ubatch, (int)cparams.n_ctx, (int)cparams.n_seq_max,
 			llama_n_batch(intern->ctx), llama_n_ubatch(intern->ctx),
 			llama_n_ctx(intern->ctx), llama_n_seq_max(intern->ctx));

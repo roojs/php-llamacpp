@@ -19,7 +19,6 @@ if (!is_readable($path)) {
 
 $e = LlamaEmbed::load($path, array(
     'n_gpu_layers' => 99,
-    'pooling' => 'cls',
 ));
 assert($e->dimension() === 1024, 'dimension must be 1024 for bge-m3');
 
@@ -42,7 +41,7 @@ assert($batch[0] !== $batch[1], 'different texts → different vectors');
 
 $e->close();
 
-$e2 = LlamaEmbed::load($path, array('n_gpu_layers' => 99, 'pooling' => 'cls'));
+$e2 = LlamaEmbed::load($path, array('n_gpu_layers' => 99));
 $vec2 = $e2->embed('second load');
 assert(count($vec2) === 1024, 'second load embed');
 $e2->close();

@@ -69,7 +69,6 @@ Restart php-fpm / Apache after enabling for those SAPIs.
 ```php
 $e = LlamaEmbed::load('/home/press/Llama/models/bge-m3/bge-m3-q4_k_m.gguf', [
     'n_gpu_layers' => 99,
-    'pooling' => 'cls',
 ]);
 $dim = $e->dimension();
 $vec = $e->embed($text);          // float[], L2-normalized
@@ -79,6 +78,7 @@ $e->close();
 
 ## Notes
 
+- Pooling comes from GGUF metadata only (no `pooling` option). Missing metadata → exception at load.
 - Links against system `libllama` (`<llama.h>`); does not vendor llama.cpp sources.
 - Do not keep the model in MINIT globals; `close()` / object dtor frees model+context.
 - RAG / MediaOutreach wiring is separate (Translate RAG plans).

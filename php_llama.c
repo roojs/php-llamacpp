@@ -91,59 +91,6 @@ static void php_llama_ensure_backend(void)
 	php_llama_backend_ready = 1;
 }
 
-static enum llama_pooling_type php_llama_parse_pooling(zval *opts)
-{
-	zval *z;
-
-	if (!opts || Z_TYPE_P(opts) != IS_ARRAY) {
-		return LLAMA_POOLING_TYPE_CLS;
-	}
-	z = zend_hash_str_find(Z_ARRVAL_P(opts), "pooling", sizeof("pooling") - 1);
-	if (!z) {
-		return LLAMA_POOLING_TYPE_CLS;
-	}
-	if (Z_TYPE_P(z) == IS_STRING) {
-		if (zend_string_equals_literal_ci(Z_STR_P(z), "mean")) {
-			return LLAMA_POOLING_TYPE_MEAN;
-		}
-		if (zend_string_equals_literal_ci(Z_STR_P(z), "last")) {
-			return LLAMA_POOLING_TYPE_LAST;
-		}
-		if (zend_string_equals_literal_ci(Z_STR_P(z), "none")) {
-			return LLAMA_POOLING_TYPE_NONE;
-		}
-	}
-	return LLAMA_POOLING_TYPE_CLS;
-}
-
-static int32_t php_llama_parse_n_gpu_layers(zval *opts)
-{
-	zval *z;
-
-	if (!opts || Z_TYPE_P(opts) != IS_ARRAY) {
-		return 99;
-	}
-	z = zend_hash_str_find(Z_ARRVAL_P(opts), "n_gpu_layers", sizeof("n_gpu_layers") - 1);
-	if (!z) {
-		return 99;
-	}
-	return (int32_t)zval_get_long(z);
-}
-
-static int php_llama_parse_debug(zval *opts)
-{
-	zval *z;
-
-	if (!opts || Z_TYPE_P(opts) != IS_ARRAY) {
-		return 0;
-	}
-	z = zend_hash_str_find(Z_ARRVAL_P(opts), "debug", sizeof("debug") - 1);
-	if (!z) {
-		return 0;
-	}
-	return zend_is_true(z) ? 1 : 0;
-}
-
 static void php_llama_l2_normalize(float *v, int32_t n)
 {
 	double sum = 0.0;
@@ -476,8 +423,7 @@ PHP_METHOD(LlamaEmbed, load)
 	php_llama_embed_object *intern;
 	struct llama_model_params mparams;
 	struct llama_context_params cparams;
-	int32_t n_gpu_layers;
-	enum llama_pooling_type pooling;
+	enum llama_pooling_type pooling = LLAMA_POOLING_TYPE_CLS;
 
 	ZEND_PARSE_PARAMETERS_START(1, 2)
 		Z_PARAM_STR(path)
@@ -487,15 +433,36 @@ PHP_METHOD(LlamaEmbed, load)
 
 	php_llama_ensure_backend();
 
-	n_gpu_layers = php_llama_parse_n_gpu_layers(options);
-	pooling = php_llama_parse_pooling(options);
-
 	mparams = llama_model_default_params();
-	mparams.n_gpu_layers = n_gpu_layers;
+	mparams.n_gpu_layers = 99;
 
 	object_init_ex(return_value, php_llama_embed_ce);
 	intern = Z_LLAMA_EMBED_P(return_value);
-	intern->debug = php_llama_parse_debug(options);
+	intern->debug = 0;
+
+	if (options && Z_TYPE_P(options) == IS_ARRAY) {
+		zval *z;
+		z = zend_hash_str_find(Z_ARRVAL_P(options), "n_gpu_layers", sizeof("n_gpu_layers") - 1);
+		if (z) {
+			mparams.n_gpu_layers = (int32_t)zval_get_long(z);
+		}
+		z = zend_hash_str_find(Z_ARRVAL_P(options), "pooling", sizeof("pooling") - 1);
+		if (z && Z_TYPE_P(z) == IS_STRING) {
+			if (zend_string_equals_literal_ci(Z_STR_P(z), "mean")) {
+				pooling = LLAMA_POOLING_TYPE_MEAN;
+			}
+			if (zend_string_equals_literal_ci(Z_STR_P(z), "last")) {
+				pooling = LLAMA_POOLING_TYPE_LAST;
+			}
+			if (zend_string_equals_literal_ci(Z_STR_P(z), "none")) {
+				pooling = LLAMA_POOLING_TYPE_NONE;
+			}
+		}
+		z = zend_hash_str_find(Z_ARRVAL_P(options), "debug", sizeof("debug") - 1);
+		if (z) {
+			intern->debug = zend_is_true(z) ? 1 : 0;
+		}
+	}
 
 	intern->model = llama_model_load_from_file(ZSTR_VAL(path), mparams);
 	if (!intern->model) {

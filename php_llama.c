@@ -421,8 +421,10 @@ PHP_METHOD(LlamaEmbed, embed)
 
 	array_init_size(&texts, 1);
 	add_next_index_str(&texts, zend_string_copy(text));
+	ZVAL_UNDEF(&batch);
 	if (php_llama_embed_texts(intern, &texts, &batch) != SUCCESS) {
 		zval_ptr_dtor(&texts);
+		zval_ptr_dtor(&batch);
 		RETURN_THROWS();
 	}
 	zval_ptr_dtor(&texts);

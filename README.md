@@ -1,6 +1,6 @@
 # php-llamacpp — PHP Zend extension for local GGUF embeddings
 
-Exposes `LlamaEmbed` (load / embed / embedBatch / dimension / close) via Debian `libllama`.
+Exposes `LlamaEmbed` (load / embedBatch / dimension / close) via Debian `libllama`.
 
 Sibling repo at `gitlive/php-llamacpp` (used by Translate RAG local embed).
 
@@ -71,14 +71,14 @@ $e = LlamaEmbed::load('/home/press/Llama/models/bge-m3/bge-m3-q4_k_m.gguf', [
     'n_gpu_layers' => 99,
 ]);
 $dim = $e->dimension();
-$vec = $e->embed($text);          // float[], L2-normalized
-$vecs = $e->embedBatch([$a, $b]);
+$vecs = $e->embedBatch([$a, $b]); // float[][], each L2-normalized
 $e->close();
 ```
 
 ## Notes
 
 - Pooling comes from GGUF metadata only (no `pooling` option). Missing metadata → exception at load.
+- Single-string embed: `$e->embedBatch([$text])[0]` (or `Pman_Translate_RAG_Llama::embed()`).
 - Links against system `libllama` (`<llama.h>`); does not vendor llama.cpp sources.
 - Do not keep the model in MINIT globals; `close()` / object dtor frees model+context.
 - RAG / MediaOutreach wiring is separate (Translate RAG plans).

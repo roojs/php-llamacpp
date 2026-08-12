@@ -22,10 +22,10 @@ $e = LlamaEmbed::load($path, array(
 ));
 assert($e->dimension() === 1024, 'dimension must be 1024 for bge-m3');
 
-$vec = $e->embed('Media Outreach press release translation test.');
-assert(is_array($vec) && count($vec) === 1024, 'embed length');
+$vec = $e->embedBatch(array('Media Outreach press release translation test.'));
+assert(is_array($vec) && count($vec) === 1 && count($vec[0]) === 1024, 'embed length');
 $sum = 0.0;
-foreach ($vec as $x) {
+foreach ($vec[0] as $x) {
     $sum += $x * $x;
 }
 assert($sum > 0.9 && $sum < 1.1, 'L2-normalized roughly unit length');
@@ -42,8 +42,8 @@ assert($batch[0] !== $batch[1], 'different texts → different vectors');
 $e->close();
 
 $e2 = LlamaEmbed::load($path, array('n_gpu_layers' => 99));
-$vec2 = $e2->embed('second load');
-assert(count($vec2) === 1024, 'second load embed');
+$vec2 = $e2->embedBatch(array('second load'));
+assert(count($vec2) === 1 && count($vec2[0]) === 1024, 'second load embed');
 $e2->close();
 
 fwrite(STDERR, "test_llama.php OK\n");

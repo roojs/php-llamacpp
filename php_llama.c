@@ -18,14 +18,6 @@ static int php_llama_backend_ready = 0;
 /* Max sequences packed into one llama_encode (align RAG array_chunk). */
 #define PHP_LLAMA_EMBED_SEQ_MAX 24
 
-
-#define Z_LLAMA_EMBED_P(zv) php_llama_embed_fetch_object(Z_OBJ_P(zv))
-
-static inline php_llama_embed_object *php_llama_embed_fetch_object(zend_object *obj)
-{
-	return (php_llama_embed_object *)((char *)(obj) - XtOffsetOf(php_llama_embed_object, std));
-}
-
 static void php_llama_embed_release(php_llama_embed_object *intern)
 {
 	if (intern->ctx) {
@@ -41,7 +33,8 @@ static void php_llama_embed_release(php_llama_embed_object *intern)
 
 static void php_llama_embed_free_obj(zend_object *object)
 {
-	php_llama_embed_object *intern = php_llama_embed_fetch_object(object);
+	php_llama_embed_object *intern = (php_llama_embed_object *)((char *)(object)
+		- XtOffsetOf(php_llama_embed_object, std));
 	php_llama_embed_release(intern);
 	zend_object_std_dtor(object);
 }
@@ -63,7 +56,8 @@ static zend_object *php_llama_embed_create_object(zend_class_entry *class_type)
 
 static php_llama_embed_object *php_llama_embed_from_zend(zend_object *obj)
 {
-	php_llama_embed_object *intern = php_llama_embed_fetch_object(obj);
+	php_llama_embed_object *intern = (php_llama_embed_object *)((char *)(obj)
+		- XtOffsetOf(php_llama_embed_object, std));
 
 	if (!intern->model || !intern->ctx) {
 		zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed is not loaded");
@@ -430,7 +424,8 @@ PHP_METHOD(LlamaEmbed, load)
 	mparams.n_gpu_layers = 99;
 
 	object_init_ex(return_value, php_llama_embed_ce);
-	intern = Z_LLAMA_EMBED_P(return_value);
+	intern = (php_llama_embed_object *)((char *)(Z_OBJ_P(return_value))
+		- XtOffsetOf(php_llama_embed_object, std));
 	intern->debug = 0;
 
 	if (options && Z_TYPE_P(options) == IS_ARRAY) {
@@ -555,7 +550,8 @@ PHP_METHOD(LlamaEmbed, close)
 
 	ZEND_PARSE_PARAMETERS_NONE();
 
-	intern = php_llama_embed_fetch_object(Z_OBJ_P(ZEND_THIS));
+	intern = (php_llama_embed_object *)((char *)(Z_OBJ_P(ZEND_THIS))
+		- XtOffsetOf(php_llama_embed_object, std));
 	php_llama_embed_release(intern);
 }
 

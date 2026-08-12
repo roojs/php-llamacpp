@@ -75,32 +75,6 @@ static void php_llama_log_quiet(enum ggml_log_level level, const char *text, voi
 	(void)user_data;
 }
 
-static void php_llama_embd_to_zval(const float *embd, int32_t dim, zval *return_vec)
-{
-	float *copy;
-	int32_t i;
-	double sum = 0.0;
-
-	copy = emalloc(sizeof(float) * (size_t)dim);
-	memcpy(copy, embd, sizeof(float) * (size_t)dim);
-	/* L2-normalize so FAISS cosine ≈ inner product */
-	for (i = 0; i < dim; i++) {
-		sum += (double)copy[i] * (double)copy[i];
-	}
-	if (sum > 0.0) {
-		sum = sqrt(sum);
-		for (i = 0; i < dim; i++) {
-			copy[i] = (float)((double)copy[i] / sum);
-		}
-	}
-
-	array_init_size(return_vec, dim);
-	for (i = 0; i < dim; i++) {
-		add_next_index_double(return_vec, (double)copy[i]);
-	}
-	efree(copy);
-}
-
 /**
  * Pack up to PHP_LLAMA_EMBED_SEQ_MAX sequences into one encode when token sum fits n_ubatch.
  */
@@ -258,7 +232,10 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 		llama_synchronize(intern->ctx);
 		for (s = 0; s < pack_n; s++) {
 			float *embd;
+			float *copy;
 			zval vec;
+			int32_t k;
+			double sum = 0.0;
 
 			embd = llama_get_embeddings_seq(intern->ctx, (llama_seq_id)s);
 			if (!embd && pack_n == 1) {
@@ -275,8 +252,23 @@ static int php_llama_embed_texts(php_llama_embed_object *intern, zval *texts_zv,
 					"LlamaEmbed: missing embeddings for seq %d", s);
 				return FAILURE;
 			}
-			ZVAL_UNDEF(&vec);
-			php_llama_embd_to_zval(embd, dim, &vec);
+			copy = emalloc(sizeof(float) * (size_t)dim);
+			memcpy(copy, embd, sizeof(float) * (size_t)dim);
+			/* L2-normalize so FAISS cosine ≈ inner product */
+			for (k = 0; k < dim; k++) {
+				sum += (double)copy[k] * (double)copy[k];
+			}
+			if (sum > 0.0) {
+				sum = sqrt(sum);
+				for (k = 0; k < dim; k++) {
+					copy[k] = (float)((double)copy[k] / sum);
+				}
+			}
+			array_init_size(&vec, dim);
+			for (k = 0; k < dim; k++) {
+				add_next_index_double(&vec, (double)copy[k]);
+			}
+			efree(copy);
 			add_next_index_zval(return_arr, &vec);
 		}
 		llama_batch_free(batch);

@@ -1,3 +1,5 @@
+ext_shared=yes
+
 dnl Debian packages llama.pc under a private multiarch dir
 if test -d /usr/lib/x86_64-linux-gnu/llama/pkgconfig; then
   PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/llama/pkgconfig:${PKG_CONFIG_PATH}"

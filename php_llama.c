@@ -402,43 +402,6 @@ PHP_METHOD(LlamaEmbed, load)
 	}
 }
 
-PHP_METHOD(LlamaEmbed, embed)
-{
-	zend_string *text;
-	php_llama_embed_object *intern;
-	zval texts;
-	zval batch;
-	zval *vec;
-
-	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_STR(text)
-	ZEND_PARSE_PARAMETERS_END();
-
-	intern = php_llama_embed_from_zend(Z_OBJ_P(ZEND_THIS));
-	if (!intern) {
-		RETURN_THROWS();
-	}
-
-	array_init_size(&texts, 1);
-	add_next_index_str(&texts, zend_string_copy(text));
-	ZVAL_UNDEF(&batch);
-	if (php_llama_embed_texts(intern, &texts, &batch) != SUCCESS) {
-		zval_ptr_dtor(&texts);
-		zval_ptr_dtor(&batch);
-		RETURN_THROWS();
-	}
-	zval_ptr_dtor(&texts);
-
-	vec = zend_hash_index_find(Z_ARRVAL(batch), 0);
-	if (!vec) {
-		zval_ptr_dtor(&batch);
-		zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed: empty embed result");
-		RETURN_THROWS();
-	}
-	ZVAL_COPY(return_value, vec);
-	zval_ptr_dtor(&batch);
-}
-
 PHP_METHOD(LlamaEmbed, embedBatch)
 {
 	zval *texts;
@@ -484,7 +447,6 @@ PHP_METHOD(LlamaEmbed, close)
 
 static const zend_function_entry php_llama_embed_methods[] = {
 	PHP_ME(LlamaEmbed, load, arginfo_llama_load, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(LlamaEmbed, embed, arginfo_llama_embed, ZEND_ACC_PUBLIC)
 	PHP_ME(LlamaEmbed, embedBatch, arginfo_llama_embed_batch, ZEND_ACC_PUBLIC)
 	PHP_ME(LlamaEmbed, dimension, arginfo_llama_dimension, ZEND_ACC_PUBLIC)
 	PHP_ME(LlamaEmbed, close, arginfo_llama_close, ZEND_ACC_PUBLIC)

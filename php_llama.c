@@ -83,6 +83,7 @@ static void php_llama_embd_to_zval(const float *embd, int32_t dim, zval *return_
 
 	copy = emalloc(sizeof(float) * (size_t)dim);
 	memcpy(copy, embd, sizeof(float) * (size_t)dim);
+	/* L2-normalize so FAISS cosine ≈ inner product */
 	for (i = 0; i < dim; i++) {
 		sum += (double)copy[i] * (double)copy[i];
 	}

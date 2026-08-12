@@ -81,16 +81,6 @@ static void php_llama_log_quiet(enum ggml_log_level level, const char *text, voi
 	(void)user_data;
 }
 
-static void php_llama_ensure_backend(void)
-{
-	if (php_llama_backend_ready) {
-		return;
-	}
-	llama_log_set(php_llama_log_quiet, NULL);
-	llama_backend_init();
-	php_llama_backend_ready = 1;
-}
-
 static void php_llama_l2_normalize(float *v, int32_t n)
 {
 	double sum = 0.0;
@@ -430,7 +420,11 @@ PHP_METHOD(LlamaEmbed, load)
 		Z_PARAM_ARRAY_OR_NULL(options)
 	ZEND_PARSE_PARAMETERS_END();
 
-	php_llama_ensure_backend();
+	if (!php_llama_backend_ready) {
+		llama_log_set(php_llama_log_quiet, NULL);
+		llama_backend_init();
+		php_llama_backend_ready = 1;
+	}
 
 	mparams = llama_model_default_params();
 	mparams.n_gpu_layers = 99;

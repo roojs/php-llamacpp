@@ -101,90 +101,6 @@ static void php_llama_embd_to_zval(const float *embd, int32_t dim, zval *return_
 	efree(copy);
 }
 
-static int php_llama_embed_text(php_llama_embed_object *intern, const char *text, size_t text_len, zval *return_vec)
-{
-	const struct llama_vocab *vocab;
-	llama_token *tokens = NULL;
-	int32_t n_tokens;
-	int32_t n_tokens_max;
-	struct llama_batch batch;
-	float *embd;
-	int32_t dim;
-	int32_t i;
-	int rc;
-
-	vocab = llama_model_get_vocab(intern->model);
-	dim = intern->dimension;
-	n_tokens_max = (int32_t)text_len + 8;
-	if (n_tokens_max < 64) {
-		n_tokens_max = 64;
-	}
-
-	tokens = emalloc(sizeof(llama_token) * (size_t)n_tokens_max);
-	n_tokens = llama_tokenize(vocab, text, (int32_t)text_len, tokens, n_tokens_max, true, true);
-	if (n_tokens < 0) {
-		n_tokens_max = -n_tokens + 8;
-		tokens = erealloc(tokens, sizeof(llama_token) * (size_t)n_tokens_max);
-		n_tokens = llama_tokenize(vocab, text, (int32_t)text_len, tokens, n_tokens_max, true, true);
-	}
-	if (n_tokens <= 0) {
-		efree(tokens);
-		zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed: tokenize failed");
-		return FAILURE;
-	}
-
-	{
-		int32_t n_ubatch = (int32_t)llama_n_ubatch(intern->ctx);
-		if (n_tokens > n_ubatch) {
-			efree(tokens);
-			zend_throw_exception_ex(zend_ce_exception, 0,
-				"LlamaEmbed: text too long (%d tokens, max %d)", n_tokens, n_ubatch);
-			return FAILURE;
-		}
-	}
-
-	llama_memory_clear(llama_get_memory(intern->ctx), true);
-
-	batch = llama_batch_init(n_tokens, 0, 1);
-	batch.n_tokens = n_tokens;
-	for (i = 0; i < n_tokens; i++) {
-		batch.token[i] = tokens[i];
-		batch.pos[i] = i;
-		batch.n_seq_id[i] = 1;
-		batch.seq_id[i][0] = 0;
-		batch.logits[i] = 0;
-	}
-	/* request embeddings for all tokens when pooling; last token is enough for CLS/LAST */
-	batch.logits[n_tokens - 1] = 1;
-
-	rc = llama_encode(intern->ctx, batch);
-	if (rc != 0) {
-		rc = llama_decode(intern->ctx, batch);
-	}
-	efree(tokens);
-	if (rc != 0) {
-		llama_batch_free(batch);
-		zend_throw_exception_ex(zend_ce_exception, 0,
-			"LlamaEmbed: encode/decode failed (rc=%d)", rc);
-		return FAILURE;
-	}
-
-	llama_synchronize(intern->ctx);
-	embd = llama_get_embeddings_seq(intern->ctx, 0);
-	if (!embd) {
-		embd = llama_get_embeddings_ith(intern->ctx, -1);
-	}
-	if (!embd) {
-		llama_batch_free(batch);
-		zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed: missing embeddings");
-		return FAILURE;
-	}
-
-	php_llama_embd_to_zval(embd, dim, return_vec);
-	llama_batch_free(batch);
-	return SUCCESS;
-}
-
 /**
  * Pack up to PHP_LLAMA_EMBED_SEQ_MAX sequences into one encode when token sum fits n_ubatch.
  */
@@ -490,6 +406,9 @@ PHP_METHOD(LlamaEmbed, embed)
 {
 	zend_string *text;
 	php_llama_embed_object *intern;
+	zval texts;
+	zval batch;
+	zval *vec;
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
 		Z_PARAM_STR(text)
@@ -500,9 +419,22 @@ PHP_METHOD(LlamaEmbed, embed)
 		RETURN_THROWS();
 	}
 
-	if (php_llama_embed_text(intern, ZSTR_VAL(text), ZSTR_LEN(text), return_value) != SUCCESS) {
+	array_init_size(&texts, 1);
+	add_next_index_str(&texts, zend_string_copy(text));
+	if (php_llama_embed_texts(intern, &texts, &batch) != SUCCESS) {
+		zval_ptr_dtor(&texts);
 		RETURN_THROWS();
 	}
+	zval_ptr_dtor(&texts);
+
+	vec = zend_hash_index_find(Z_ARRVAL(batch), 0);
+	if (!vec) {
+		zval_ptr_dtor(&batch);
+		zend_throw_exception_ex(zend_ce_exception, 0, "LlamaEmbed: empty embed result");
+		RETURN_THROWS();
+	}
+	ZVAL_COPY(return_value, vec);
+	zval_ptr_dtor(&batch);
 }
 
 PHP_METHOD(LlamaEmbed, embedBatch)

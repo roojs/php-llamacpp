@@ -75,31 +75,23 @@ static void php_llama_log_quiet(enum ggml_log_level level, const char *text, voi
 	(void)user_data;
 }
 
-static void php_llama_l2_normalize(float *v, int32_t n)
-{
-	double sum = 0.0;
-	int32_t i;
-
-	for (i = 0; i < n; i++) {
-		sum += (double)v[i] * (double)v[i];
-	}
-	if (sum <= 0.0) {
-		return;
-	}
-	sum = sqrt(sum);
-	for (i = 0; i < n; i++) {
-		v[i] = (float)((double)v[i] / sum);
-	}
-}
-
 static void php_llama_embd_to_zval(const float *embd, int32_t dim, zval *return_vec)
 {
 	float *copy;
 	int32_t i;
+	double sum = 0.0;
 
 	copy = emalloc(sizeof(float) * (size_t)dim);
 	memcpy(copy, embd, sizeof(float) * (size_t)dim);
-	php_llama_l2_normalize(copy, dim);
+	for (i = 0; i < dim; i++) {
+		sum += (double)copy[i] * (double)copy[i];
+	}
+	if (sum > 0.0) {
+		sum = sqrt(sum);
+		for (i = 0; i < dim; i++) {
+			copy[i] = (float)((double)copy[i] / sum);
+		}
+	}
 
 	array_init_size(return_vec, dim);
 	for (i = 0; i < dim; i++) {

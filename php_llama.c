@@ -327,7 +327,6 @@ PHP_METHOD(LlamaEmbed, load)
 		}
 	}
 
-	llama_log_set(php_llama_log_quiet, NULL);
 	if (!php_llama_backend_ready) {
 		llama_backend_init();
 		php_llama_backend_ready = 1;

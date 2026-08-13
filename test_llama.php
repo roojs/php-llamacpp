@@ -17,9 +17,7 @@ if (!is_readable($path)) {
     exit(1);
 }
 
-$e = LlamaEmbed::load($path, array(
-    'n_gpu_layers' => 99,
-));
+$e = LlamaEmbed::load($path);
 assert($e->dimension() === 1024, 'dimension must be 1024 for bge-m3');
 
 $vec = $e->embedBatch(array('Media Outreach press release translation test.'));
@@ -41,7 +39,7 @@ assert($batch[0] !== $batch[1], 'different texts → different vectors');
 
 $e->close();
 
-$e2 = LlamaEmbed::load($path, array('n_gpu_layers' => 99));
+$e2 = LlamaEmbed::load($path);
 $vec2 = $e2->embedBatch(array('second load'));
 assert(count($vec2) === 1 && count($vec2[0]) === 1024, 'second load embed');
 $e2->close();

@@ -311,14 +311,9 @@ PHP_METHOD(LlamaEmbed, load)
 		Z_PARAM_ARRAY_OR_NULL(options)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (!php_llama_backend_ready) {
-		llama_log_set(php_llama_log_quiet, NULL);
-		llama_backend_init();
-		php_llama_backend_ready = 1;
-	}
-
 	mparams = llama_model_default_params();
-	mparams.n_gpu_layers = 99;
+	/* -1 = all layers; no PHP override */
+	mparams.n_gpu_layers = -1;
 
 	object_init_ex(return_value, php_llama_embed_ce);
 	intern = (php_llama_embed_object *)((char *)(Z_OBJ_P(return_value))
@@ -326,15 +321,16 @@ PHP_METHOD(LlamaEmbed, load)
 	intern->debug = 0;
 
 	if (options && Z_TYPE_P(options) == IS_ARRAY) {
-		zval *z;
-		z = zend_hash_str_find(Z_ARRVAL_P(options), "n_gpu_layers", sizeof("n_gpu_layers") - 1);
-		if (z) {
-			mparams.n_gpu_layers = (int32_t)zval_get_long(z);
-		}
-		z = zend_hash_str_find(Z_ARRVAL_P(options), "debug", sizeof("debug") - 1);
+		zval *z = zend_hash_str_find(Z_ARRVAL_P(options), "debug", sizeof("debug") - 1);
 		if (z) {
 			intern->debug = zend_is_true(z) ? 1 : 0;
 		}
+	}
+
+	llama_log_set(php_llama_log_quiet, NULL);
+	if (!php_llama_backend_ready) {
+		llama_backend_init();
+		php_llama_backend_ready = 1;
 	}
 
 	intern->model = llama_model_load_from_file(ZSTR_VAL(path), mparams);

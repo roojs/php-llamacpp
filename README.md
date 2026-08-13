@@ -67,9 +67,7 @@ Restart php-fpm / Apache after enabling for those SAPIs.
 ## API
 
 ```php
-$e = LlamaEmbed::load('/home/press/Llama/models/bge-m3/bge-m3-q4_k_m.gguf', [
-    'n_gpu_layers' => 99,
-]);
+$e = LlamaEmbed::load('/home/press/Llama/models/bge-m3/bge-m3-q4_k_m.gguf');
 $dim = $e->dimension();
 $vecs = $e->embedBatch([$a, $b]); // float[][], each L2-normalized
 $e->close();
@@ -77,7 +75,9 @@ $e->close();
 
 ## Notes
 
+- GPU offload is always all layers (`n_gpu_layers = -1`); no PHP option.
 - Pooling comes from GGUF metadata only (no `pooling` option). Missing metadata → exception at load.
+
 - Single-string embed: `$e->embedBatch([$text])[0]` (or `Pman_Translate_RAG_Llama::embed()`).
 - Links against system `libllama` (`<llama.h>`); does not vendor llama.cpp sources.
 - Do not keep the model in MINIT globals; `close()` / object dtor frees model+context.

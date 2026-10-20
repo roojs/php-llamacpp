@@ -10,14 +10,16 @@ Sibling repo at `gitlive/php-llamacpp` (used by Translate RAG local embed).
 - `build-essential`, `pkg-config`, `curl`
 - `libllama0` / `libllama-dev` (and ggml backends: vulkan, blas)
 
-Ubuntu 25.04 (`plucky`) does not ship `libllama`. Install the libc-matching builds from the [roojs APT repository](https://roojs.github.io/repos/) (Debian sid’s newest debs need glibc 2.43 and will not configure here):
+**amd64 only.** Deploy hosts are Debian 13 (`trixie`). Ubuntu 25.04+ (`plucky`, `questing`, `resolute`) is for local testing on the same architecture.
+
+Those suites cannot install Debian sid’s newest `libllama` (it needs glibc 2.43). Use the libc-matching builds from the [roojs APT repository](https://roojs.github.io/repos/):
 
 ```bash
 cd php-llamacpp
 ./scripts/fetch-libllama.sh
 ```
 
-That script adds the roojs source for this suite (`trixie`, `plucky`, `questing`, or `resolute`), installs `libggml*` + `libllama*` plus the vulkan and blas backends, skips HIP on ROCm, and registers `/usr/lib/*/llama` with `ldconfig`.
+That script adds the roojs source for this suite, installs `libggml*` + `libllama*` plus the vulkan and blas backends, skips HIP on ROCm, and registers `/usr/lib/x86_64-linux-gnu/llama` with `ldconfig`.
 
 Build on **each host** against that host’s PHP — do not copy `llama.so` between machines.
 

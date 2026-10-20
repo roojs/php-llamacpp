@@ -14,7 +14,8 @@ PKG_CHECK_MODULES([LLAMA], [llama], [], [
   AC_MSG_ERROR([llama.pc not found — install libllama-dev; set PKG_CONFIG_PATH to …/llama/pkgconfig])
 ])
 PHP_EVAL_INCLINE([$LLAMA_CFLAGS])
-PHP_EVAL_LIBLINE([$LLAMA_LIBS], [LLAMA_SHARED_LIBADD])
+dnl Link line is $(LLAMACPP_SHARED_LIBADD), from the extension name.
+PHP_EVAL_LIBLINE([$LLAMA_LIBS], [LLAMACPP_SHARED_LIBADD])
 
 PHP_NEW_EXTENSION(llamacpp, php_llamacpp.c, yes)
-PHP_SUBST(LLAMA_SHARED_LIBADD)
+PHP_SUBST(LLAMACPP_SHARED_LIBADD)

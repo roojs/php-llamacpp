@@ -1,25 +1,14 @@
-Debian package for the llamacpp PHP extension.
+Debian packaging for the llamacpp PHP extension.
 
 `dpkg-buildpackage` builds one module package per PHP version from
-`phpquery -V` (`php8.4-llamacpp` on trixie, plucky, and questing,
-`php8.5-llamacpp` on resolute) and an empty `php-llamacpp` package that
-depends on the default PHP's module. `dh-php` installs:
+`phpquery -V` (`php8.4-llamacpp`, `php8.5-llamacpp`, …) and an empty
+`php-llamacpp` package that depends on the default PHP's module.
+
+`dh-php` installs:
 
   /usr/lib/php/<api>/llamacpp.so
   /etc/php/<version>/mods-available/llamacpp.ini
 
 and the maintainer scripts call `php_invoke enmod <version> ALL llamacpp`.
-That is the same hook packaged PHP modules use: it registers the module
-and enables it for every SAPI of that version (`cli`, `fpm`, `apache2`,
-and the rest). A SAPI package installed afterwards enables registered
-modules itself, so fpm or apache added later still loads llamacpp.
 
-Build (amd64), after `./scripts/fetch-libllama.sh`:
-
-  sudo apt-get install -y build-essential dpkg-dev debhelper dh-php php-all-dev pkgconf
-  ./scripts/release/set-debian-php-package.sh
-  dpkg-buildpackage -us -uc -b
-
-GitHub Actions does this for each suite and appends `+<suite>` to the
-Debian version so the packages on the one GitHub Release have distinct
-filenames. `scripts/release.sh` tags; it does not build the packages.
+Build steps are in ../BUILD.md.

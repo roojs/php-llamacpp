@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright (c) 2026 Roo J Solutions Ltd.
+# Author: Leon <leon@roojs.com>
+# Licensed under the PHP License, version 3.01. See LICENSE.
 set -euo pipefail
 # Install libllama/libggml from the roojs APT repo:
 #   https://roojs.github.io/repos/

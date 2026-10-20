@@ -1,3 +1,7 @@
+dnl Copyright (c) 2026 Roo J Solutions Ltd.
+dnl Author: Leon <leon@roojs.com>
+dnl Licensed under the PHP License, version 3.01. See LICENSE.
+
 ext_shared=yes
 
 dnl Debian packages llama.pc under a private multiarch dir. amd64 only.

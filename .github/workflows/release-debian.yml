@@ -1,0 +1,16 @@
+name: Release - Debian
+
+# Manual .deb build. Tags still go through Release (release.yml).
+
+on:
+  workflow_dispatch:
+
+run-name: Release - Debian - ${{ github.ref_name }}
+
+permissions:
+  contents: read
+
+jobs:
+  build-debian:
+    name: Debian packages
+    uses: ./.github/workflows/x-debian.yml

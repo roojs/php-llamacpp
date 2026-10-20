@@ -1,3 +1,19 @@
+/*
+   +----------------------------------------------------------------------+
+   | Copyright (c) 2026 Roo J Solutions Ltd.                              |
+   +----------------------------------------------------------------------+
+   | This source file is subject to version 3.01 of the PHP license,      |
+   | that is bundled with this package in the file LICENSE, and is        |
+   | available through the world-wide-web at the following url:           |
+   | https://www.php.net/license/3_01.txt                                 |
+   | If you did not receive a copy of the PHP license and are unable to   |
+   | obtain it through the world-wide-web, please send a note to          |
+   | license@php.net so we can mail you a copy immediately.               |
+   +----------------------------------------------------------------------+
+   | Author: Leon <leon@roojs.com>                                        |
+   +----------------------------------------------------------------------+
+*/
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -15,7 +31,7 @@ zend_class_entry *php_llama_embed_ce;
 static zend_object_handlers php_llama_embed_object_handlers;
 static int php_llama_backend_ready = 0;
 
-/* Max sequences packed into one llama_encode (align RAG array_chunk). */
+/* Max sequences packed into one llama_encode. */
 #define PHP_LLAMA_EMBED_SEQ_MAX 24
 
 static void php_llama_embed_release(php_llama_embed_object *intern)
@@ -294,9 +310,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_llama_dimension, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_llama_close, 0, 0, IS_VOID, 0)
-ZEND_END_ARG_INFO()
-
 PHP_METHOD(LlamaEmbed, load)
 {
 	zend_string *path;
@@ -417,22 +430,10 @@ PHP_METHOD(LlamaEmbed, dimension)
 	RETURN_LONG(intern->dimension);
 }
 
-PHP_METHOD(LlamaEmbed, close)
-{
-	php_llama_embed_object *intern;
-
-	ZEND_PARSE_PARAMETERS_NONE();
-
-	intern = (php_llama_embed_object *)((char *)(Z_OBJ_P(ZEND_THIS))
-		- XtOffsetOf(php_llama_embed_object, std));
-	php_llama_embed_release(intern);
-}
-
 static const zend_function_entry php_llama_embed_methods[] = {
 	PHP_ME(LlamaEmbed, load, arginfo_llama_load, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(LlamaEmbed, embedBatch, arginfo_llama_embed_batch, ZEND_ACC_PUBLIC)
 	PHP_ME(LlamaEmbed, dimension, arginfo_llama_dimension, ZEND_ACC_PUBLIC)
-	PHP_ME(LlamaEmbed, close, arginfo_llama_close, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 

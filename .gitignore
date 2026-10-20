@@ -16,6 +16,15 @@
 llama.la
 autom4te.cache/
 build/
+build-*/
+debian/php-llama.php
+debian/php-llama/
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.substvars
+debian/*.debhelper.log
+debian/*.debhelper
 run-tests.php
 tests/
 Makefile.objects

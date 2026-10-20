@@ -1,0 +1,99 @@
+name: X - Debian .deb build (Release calls this)
+
+# The real dpkg-buildpackage job. Start Release, or Release - Debian, not this file.
+# One job per suite. The .deb version is upstream-1+suite so the roojs APT
+# pool can store a different PHP build for each suite.
+
+on:
+  workflow_call:
+
+jobs:
+  build-debian:
+    name: ${{ matrix.suite }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: trixie
+            image: debian:trixie
+          - suite: plucky
+            image: ubuntu:25.04
+          - suite: questing
+            image: ubuntu:25.10
+          - suite: resolute
+            image: ubuntu:26.04
+    container:
+      image: ${{ matrix.image }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      ROOJS_APT_SUITE: ${{ matrix.suite }}
+      TZ: UTC
+    steps:
+      - name: Install git
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates curl
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install libllama from the roojs APT repository
+        run: |
+          set -euo pipefail
+          chmod +x scripts/fetch-libllama.sh
+          ./scripts/fetch-libllama.sh
+
+      - name: Install build dependencies
+        run: |
+          apt-get install -y --no-install-recommends \
+            build-essential dpkg-dev debhelper dh-php php-all-dev pkgconf fakeroot
+
+      - name: Build Debian package (amd64)
+        env:
+          DEBFULLNAME: GitHub Actions
+          DEBEMAIL: actions@users.noreply.github.com
+          SUITE: ${{ matrix.suite }}
+        run: |
+          set -euo pipefail
+          chmod +x scripts/release/changelog.sh scripts/release/sync-debian-changelog.sh
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            if cl_ver="$(./scripts/release/changelog.sh version 2>/dev/null)"; then
+              tag_ver="${GITHUB_REF_NAME#v}"
+              if [[ "${cl_ver}" != "${tag_ver}" ]]; then
+                echo "CHANGELOG.md version ${cl_ver} != tag ${tag_ver}" >&2
+                exit 1
+              fi
+              ./scripts/release/sync-debian-changelog.sh
+            else
+              ./scripts/release/sync-debian-changelog.sh --release "$GITHUB_REF_NAME"
+            fi
+          else
+            ./scripts/release/sync-debian-changelog.sh
+          fi
+          # Keep the pool filename unique per suite. Same upstream version,
+          # different PHP / libc, so the Debian revision gains +suite.
+          sed -i "1s/(\([^)]*\))/(\1+${SUITE})/" debian/changelog
+          head -n 1 debian/changelog
+          dpkg-buildpackage -us -uc -b
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p artifacts
+          shopt -s nullglob
+          for deb in ../*.deb; do
+            case "${deb}" in
+              *dbgsym*) continue ;;
+            esac
+            cp -v "${deb}" artifacts/
+          done
+          ls -lh artifacts
+
+      - name: Upload Debian artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-llama-${{ matrix.suite }}
+          path: artifacts/*

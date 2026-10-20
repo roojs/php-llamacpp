@@ -1,0 +1,27 @@
+Source: php-llama
+Section: php
+Priority: optional
+Maintainer: Alan Knowles <alan@roojs.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-php,
+               php-all-dev,
+               pkgconf,
+               libllama-dev
+Standards-Version: 4.7.2
+Rules-Requires-Root: no
+Homepage: https://github.com/roojs/php-llamacpp
+
+Package: php-llama
+Architecture: amd64
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         ${php:Depends},
+         libllama0
+Description: PHP extension for local GGUF embeddings
+ LlamaEmbed loads a GGUF model through libllama and returns
+ L2-normalized embedding vectors.
+ .
+ The package is built against every PHP version in the distro
+ (phpquery -V) and registers the llama module with phpenmod for
+ every SAPI of those versions (cli, fpm, apache2, and the rest).
+ A SAPI installed later picks the module up from that registry.

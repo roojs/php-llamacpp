@@ -1,0 +1,72 @@
+#!/usr/bin/make -f
+# Copyright (c) 2026 Roo J Solutions Ltd.
+# Author: Leon <leon@roojs.com>
+# Licensed under the PHP License, version 3.01. See the upstream LICENSE.
+
+export DH_VERBOSE = 1
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export PHP_RPATH = no
+
+# libllama.pc lives outside the default pkg-config search path.
+export PKG_CONFIG_PATH := /usr/lib/x86_64-linux-gnu/llama/pkgconfig:$(PKG_CONFIG_PATH)
+
+# One .so per PHP version reported by the distro. dh-php then enables
+# the module for every SAPI of that version.
+PHP_VERSIONS := $(shell phpquery -V 2>/dev/null)
+ifeq ($(strip $(PHP_VERSIONS)),)
+$(error phpquery -V returned no PHP versions; install php-all-dev)
+endif
+
+%:
+	dh $@ --with php
+
+# The extension is phpize'd inside build-<version>/. Do not autoreconf
+# or distclean a developer phpize tree left in the repository root.
+override_dh_autoreconf:
+	true
+
+override_dh_autoreconf_clean:
+	true
+
+override_dh_update_autotools_config:
+	true
+
+override_dh_auto_configure:
+	set -eu; \
+	for v in $(PHP_VERSIONS); do \
+		rm -rf "build-$$v"; \
+		mkdir "build-$$v"; \
+		cp config.m4 php_llama.c php_llama.h "build-$$v/"; \
+		( cd "build-$$v" && phpize$$v && ./configure --with-php-config="/usr/bin/php-config$$v" ); \
+	done
+
+override_dh_auto_build:
+	set -eu; \
+	for v in $(PHP_VERSIONS); do \
+		$(MAKE) -C "build-$$v"; \
+	done
+
+override_dh_auto_test:
+	true
+
+override_dh_auto_install:
+	true
+
+override_dh_php:
+	set -eu; \
+	for v in $(PHP_VERSIONS); do \
+		printf 'mod build-%s/modules/llama.so\nmod debian/llama.ini\n' "$$v" > debian/php-llama.php; \
+		dh_php -p php-llama --php-version="$$v"; \
+	done
+
+override_dh_shlibdeps:
+	dh_shlibdeps -- -l/usr/lib/x86_64-linux-gnu/llama
+
+override_dh_auto_clean:
+	rm -rf build-*
+	rm -f debian/php-llama.php
+
+override_dh_clean:
+	rm -rf build-*
+	rm -f debian/php-llama.php
+	dh_clean

@@ -1,0 +1,103 @@
+name: Release
+
+# Tag pushes (scripts/release.sh) build php-llama for each suite and
+# publish one GitHub Release per suite: vX.Y.Z-trixie, vX.Y.Z-plucky,
+# vX.Y.Z-questing, vX.Y.Z-resolute. Those tags must not rebuild.
+# roojs/repos can later map each tag pattern onto that one suite.
+
+run-name: Release - ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '!v*-trixie'
+      - '!v*-plucky'
+      - '!v*-questing'
+      - '!v*-resolute'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-debian:
+    name: Debian
+    uses: ./.github/workflows/x-debian.yml
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish
+    needs: build-debian
+    if: startsWith(github.ref, 'refs/tags/') && !endsWith(github.ref_name, '-trixie') && !endsWith(github.ref_name, '-plucky') && !endsWith(github.ref_name, '-questing') && !endsWith(github.ref_name, '-resolute')
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          chmod +x scripts/release/changelog.sh scripts/release/render-release-notes.sh
+          ./scripts/release/render-release-notes.sh "$GITHUB_REF_NAME" release-notes.md
+          for suite in trixie plucky questing resolute; do
+            dir="artifacts/php-llama-${suite}"
+            files=("${dir}"/*.deb)
+            if ((${#files[@]} == 0)) || [[ ! -f "${files[0]}" ]]; then
+              echo "no .deb for ${suite}" >&2
+              exit 1
+            fi
+            ls -lh "${files[@]}"
+            {
+              echo "php-llama built on ${suite} for ${GITHUB_REF_NAME}."
+              echo
+              echo "Installing the package enables the \`llama\` module for every SAPI of that suite's PHP (\`cli\`, \`fpm\`, \`apache2\`, and the rest) via \`phpenmod\`."
+              echo
+              echo "Notes: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${GITHUB_REF_NAME}"
+            } > "notes-${suite}.md"
+            pkg_tag="${GITHUB_REF_NAME}-${suite}"
+            gh release create "$pkg_tag" "${files[@]}" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "${GITHUB_REF_NAME} ${suite}" \
+              --notes-file "notes-${suite}.md" \
+              --latest=false \
+            || {
+              gh release upload "$pkg_tag" "${files[@]}" \
+                --repo "$GITHUB_REPOSITORY" --clobber
+              gh release edit "$pkg_tag" \
+                --repo "$GITHUB_REPOSITORY" \
+                --notes-file "notes-${suite}.md" \
+                --latest=false
+            }
+          done
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md \
+          || gh release edit "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --notes-file release-notes.md
+          gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --latest
+
+      - name: Finalize changelog on the default branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ./scripts/release/finalize-changelog.sh "$GITHUB_REF_NAME"
+          git add CHANGELOG.md debian/changelog
+          git diff --staged --quiet && exit 0
+          git commit -m "Finalize changelog for $GITHUB_REF_NAME"
+          default_branch="$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)"
+          git push origin "HEAD:${default_branch}"

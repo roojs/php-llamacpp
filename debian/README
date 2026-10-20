@@ -18,6 +18,6 @@ Build (amd64), after `./scripts/fetch-libllama.sh`:
   sudo apt-get install -y build-essential dpkg-dev debhelper dh-php php-all-dev pkgconf
   dpkg-buildpackage -us -uc -b
 
-GitHub Actions does this per suite and appends `+<suite>` to the Debian
-version so trixie, plucky, questing, and resolute do not share one pool
-filename. `scripts/release.sh` tags; it does not build the packages.
+GitHub Actions does this for each suite and appends `+<suite>` to the
+Debian version so the packages on the one GitHub Release have distinct
+filenames. `scripts/release.sh` tags; it does not build the packages.

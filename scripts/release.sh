@@ -12,7 +12,7 @@
 #
 # Does NOT build packages. GitHub Actions copies CHANGELOG.md into
 # debian/changelog, builds php-llama for trixie, plucky, questing, and
-# resolute, and publishes one GitHub Release per suite.
+# resolute, and attaches every .deb to the one vX.Y.Z GitHub Release.
 #
 # AGENTS ARE BANNED from running this script. Do not tag, push, or release
 # on the user's behalf. Do not unset CURSOR_AGENT, spoof the environment,
@@ -30,8 +30,6 @@ EOF
   exit 1
 fi
 
-suites=(trixie plucky questing resolute)
-
 retry=0
 for arg in "$@"; do
   case "${arg}" in
@@ -44,9 +42,8 @@ Usage: scripts/release.sh [--retry]
 
 Create an annotated tag from CHANGELOG.md and push it to origin.
 
-  --retry   Delete the existing version tag and the matching
-            per-suite package tags locally and on origin, then retag
-            HEAD and push (use after a failed release CI run).
+  --retry   Delete the existing version tag locally and on origin,
+            then retag HEAD and push (use after a failed release CI run).
 EOF
       exit 0
       ;;
@@ -91,20 +88,14 @@ fi
 git fetch --tags origin 2>/dev/null || true
 
 if [[ "${retry}" -eq 1 ]]; then
-  tags=("${tag}")
-  for suite in "${suites[@]}"; do
-    tags+=("${tag}-${suite}")
-  done
-  for t in "${tags[@]}"; do
-    if git rev-parse -q --verify "refs/tags/${t}" >/dev/null; then
-      echo "Deleting local tag ${t}..."
-      git tag -d "${t}"
-    fi
-    if git ls-remote --exit-code --tags origin "refs/tags/${t}" >/dev/null 2>&1; then
-      echo "Deleting origin tag ${t}..."
-      git push origin --delete "refs/tags/${t}"
-    fi
-  done
+  if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+    echo "Deleting local tag ${tag}..."
+    git tag -d "${tag}"
+  fi
+  if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+    echo "Deleting origin tag ${tag}..."
+    git push origin --delete "refs/tags/${tag}"
+  fi
 fi
 
 if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
@@ -127,4 +118,4 @@ echo "Pushing ${branch} and ${tag} to origin..."
 git push -u origin "${branch}"
 git push origin "${tag}"
 
-echo "Released ${tag}. GitHub Actions will build php-llama .deb files for trixie, plucky, questing, and resolute."
+echo "Released ${tag}. GitHub Actions will build the suite .deb files and attach them all to this release."

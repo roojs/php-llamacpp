@@ -1,8 +1,8 @@
 name: X - Debian .deb build (Release calls this)
 
 # The real dpkg-buildpackage job. Start Release, or Release - Debian, not this file.
-# One job per suite. The .deb version is upstream-1+suite so the roojs APT
-# pool can store a different PHP build for each suite.
+# One build job per suite. All .debs are uploaded to the single version
+# release. The Debian version is upstream-1+suite so the filenames differ.
 
 on:
   workflow_call:

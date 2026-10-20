@@ -1,9 +1,7 @@
 name: Release
 
 # Tag pushes (scripts/release.sh) build php-llama for each suite and
-# publish one GitHub Release per suite: vX.Y.Z-trixie, vX.Y.Z-plucky,
-# vX.Y.Z-questing, vX.Y.Z-resolute. Those tags must not rebuild.
-# roojs/repos can later map each tag pattern onto that one suite.
+# attach every .deb to the one vX.Y.Z GitHub Release.
 
 run-name: Release - ${{ github.ref_name }}
 
@@ -11,10 +9,6 @@ on:
   push:
     tags:
       - 'v*'
-      - '!v*-trixie'
-      - '!v*-plucky'
-      - '!v*-questing'
-      - '!v*-resolute'
   workflow_dispatch:
 
 permissions:
@@ -30,7 +24,7 @@ jobs:
   publish:
     name: Publish
     needs: build-debian
-    if: startsWith(github.ref, 'refs/tags/') && !endsWith(github.ref_name, '-trixie') && !endsWith(github.ref_name, '-plucky') && !endsWith(github.ref_name, '-questing') && !endsWith(github.ref_name, '-resolute')
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -41,7 +35,7 @@ jobs:
         with:
           path: artifacts
 
-      - name: Publish GitHub Releases
+      - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -49,44 +43,23 @@ jobs:
           shopt -s nullglob
           chmod +x scripts/release/changelog.sh scripts/release/render-release-notes.sh
           ./scripts/release/render-release-notes.sh "$GITHUB_REF_NAME" release-notes.md
-          for suite in trixie plucky questing resolute; do
-            dir="artifacts/php-llama-${suite}"
-            files=("${dir}"/*.deb)
-            if ((${#files[@]} == 0)) || [[ ! -f "${files[0]}" ]]; then
-              echo "no .deb for ${suite}" >&2
-              exit 1
-            fi
-            ls -lh "${files[@]}"
-            {
-              echo "php-llama built on ${suite} for ${GITHUB_REF_NAME}."
-              echo
-              echo "Installing the package enables the \`llama\` module for every SAPI of that suite's PHP (\`cli\`, \`fpm\`, \`apache2\`, and the rest) via \`phpenmod\`."
-              echo
-              echo "Notes: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${GITHUB_REF_NAME}"
-            } > "notes-${suite}.md"
-            pkg_tag="${GITHUB_REF_NAME}-${suite}"
-            gh release create "$pkg_tag" "${files[@]}" \
-              --repo "$GITHUB_REPOSITORY" \
-              --target "$GITHUB_SHA" \
-              --title "${GITHUB_REF_NAME} ${suite}" \
-              --notes-file "notes-${suite}.md" \
-              --latest=false \
-            || {
-              gh release upload "$pkg_tag" "${files[@]}" \
-                --repo "$GITHUB_REPOSITORY" --clobber
-              gh release edit "$pkg_tag" \
-                --repo "$GITHUB_REPOSITORY" \
-                --notes-file "notes-${suite}.md" \
-                --latest=false
-            }
-          done
-          gh release create "$GITHUB_REF_NAME" \
+          files=(artifacts/*/*.deb)
+          if ((${#files[@]} == 0)) || [[ ! -f "${files[0]}" ]]; then
+            echo "no .deb assets" >&2
+            exit 1
+          fi
+          ls -lh "${files[@]}"
+          gh release create "$GITHUB_REF_NAME" "${files[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --title "$GITHUB_REF_NAME" \
             --notes-file release-notes.md \
-          || gh release edit "$GITHUB_REF_NAME" \
-            --repo "$GITHUB_REPOSITORY" \
-            --notes-file release-notes.md
+          || {
+            gh release upload "$GITHUB_REF_NAME" "${files[@]}" \
+              --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$GITHUB_REF_NAME" \
+              --repo "$GITHUB_REPOSITORY" \
+              --notes-file release-notes.md
+          }
           gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --latest
 
       - name: Finalize changelog on the default branch

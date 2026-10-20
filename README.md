@@ -62,7 +62,7 @@ sudo apt-get install php-llama
 php -m | grep llama
 ```
 
-`scripts/release.sh` tags `vX.Y.Z` from `CHANGELOG.md` and pushes it. GitHub Actions builds the `.deb` files and publishes `vX.Y.Z-trixie`, `vX.Y.Z-plucky`, `vX.Y.Z-questing`, and `vX.Y.Z-resolute`. The [roojs APT repository](https://roojs.github.io/repos/) can pull those releases in later. Do not run the release script from an agent.
+`scripts/release.sh` tags `vX.Y.Z` from `CHANGELOG.md` and pushes it. GitHub Actions builds the suite `.deb` files and attaches them all to that one release. The [roojs APT repository](https://roojs.github.io/repos/) can pull that release in later. Do not run the release script from an agent.
 
 ## API
 

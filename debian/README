@@ -1,8 +1,9 @@
 Debian package for the llamacpp PHP extension.
 
-`dpkg-buildpackage` builds one binary package per PHP version from
-`phpquery -V`: `php8.4-llamacpp` on trixie, plucky, and questing, and
-`php8.5-llamacpp` on resolute. `dh-php` installs:
+`dpkg-buildpackage` builds one module package per PHP version from
+`phpquery -V` (`php8.4-llamacpp` on trixie, plucky, and questing,
+`php8.5-llamacpp` on resolute) and an empty `php-llamacpp` package that
+depends on the default PHP's module. `dh-php` installs:
 
   /usr/lib/php/<api>/llamacpp.so
   /etc/php/<version>/mods-available/llamacpp.ini

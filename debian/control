@@ -11,6 +11,18 @@ Standards-Version: 4.7.2
 Rules-Requires-Root: no
 Homepage: https://github.com/roojs/php-llamacpp
 
+Package: php-llamacpp
+Architecture: all
+Depends: php8.4-llamacpp (= ${binary:Version}),
+         ${misc:Depends}
+Description: PHP extension for local GGUF embeddings
+ LlamaEmbed loads a GGUF model through libllama and returns
+ L2-normalized embedding vectors.
+ .
+ This package depends on the llamacpp module for the default PHP
+ version. When the default PHP changes, this dependency follows it,
+ so an upgrade installs the module built for the new PHP.
+
 Package: php8.4-llamacpp
 Architecture: amd64
 Depends: ${shlibs:Depends},

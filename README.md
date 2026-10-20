@@ -55,11 +55,10 @@ Restart php-fpm / Apache after enabling for those SAPIs.
 
 ## Debian package
 
-Each suite build is a versioned PHP package: `php8.4-llamacpp` on Debian 13 (trixie) and Ubuntu 25.04/25.10 (plucky, questing), and `php8.5-llamacpp` on Ubuntu 26.04 (resolute). `dh-php` enables the `llamacpp` module for every SAPI of that PHP — `cli`, `fpm`, `apache2`, and the rest. A SAPI installed later picks the module up on its own.
+Each suite build ships the module for that suite's PHP (`php8.4-llamacpp` on Debian 13 and Ubuntu 25.04/25.10, `php8.5-llamacpp` on Ubuntu 26.04) plus an empty `php-llamacpp` package that depends on it. Install the alias. When the distro moves to a newer default PHP, that dependency follows, and the upgrade installs the matching module. `dh-php` enables `llamacpp` for every SAPI of that PHP — `cli`, `fpm`, `apache2`, and the rest. A SAPI installed later picks the module up on its own.
 
 ```bash
-sudo apt-get install php8.4-llamacpp   # trixie, plucky, questing
-sudo apt-get install php8.5-llamacpp   # resolute
+sudo apt-get install php-llamacpp
 php -m | grep llamacpp
 ```
 

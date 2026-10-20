@@ -15,3 +15,4 @@ for git tags (`v0.1.0`).
 
 - Initial release of the LlamaEmbed PHP extension
 - Debian packages `php8.4-llamacpp` and `php8.5-llamacpp`, each enabled for every SAPI of that PHP
+- Empty `php-llamacpp` package depending on the default PHP's module

@@ -17,7 +17,7 @@ OUTPUT="${2:-$ROOT/release-notes.md}"
 
 tmp="$(mktemp)"
 {
-  echo "This release includes \`php8.4-llamacpp\` (Debian 13 trixie, Ubuntu 25.04 plucky, Ubuntu 25.10 questing) and \`php8.5-llamacpp\` (Ubuntu 26.04 resolute). Each package is built against that PHP, and \`phpenmod\` enables \`llamacpp\` for every SAPI."
+  echo "This release includes \`php8.4-llamacpp\` (Debian 13 trixie, Ubuntu 25.04 plucky, Ubuntu 25.10 questing) and \`php8.5-llamacpp\` (Ubuntu 26.04 resolute), plus an empty \`php-llamacpp\` package that depends on the default PHP's module. \`phpenmod\` enables \`llamacpp\` for every SAPI."
   echo
   echo "The [roojs package repositories](https://roojs.github.io/repos/) can pull this release in later."
   echo

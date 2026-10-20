@@ -11,7 +11,7 @@
 # 4. git tag -a + git push (branch + tag) → GitHub Actions builds packages
 #
 # Does NOT build packages. GitHub Actions copies CHANGELOG.md into
-# debian/changelog, builds php-llama for trixie, plucky, questing, and
+# debian/changelog, builds php-llamacpp for trixie, plucky, questing, and
 # resolute, and attaches every .deb to the one vX.Y.Z GitHub Release.
 #
 # AGENTS ARE BANNED from running this script. Do not tag, push, or release

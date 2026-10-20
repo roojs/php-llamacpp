@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to php-llama are documented in this file.
+All notable changes to php-llamacpp are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
@@ -14,4 +14,4 @@ for git tags (`v0.1.0`).
 ### Added
 
 - Initial release of the LlamaEmbed PHP extension
-- Debian package `php-llama`, enabled for every SAPI of the distro PHP
+- Debian packages `php8.4-llamacpp` and `php8.5-llamacpp`, each enabled for every SAPI of that PHP

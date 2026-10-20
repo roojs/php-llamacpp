@@ -1,6 +1,6 @@
 name: Release
 
-# Tag pushes (scripts/release.sh) build php-llama for each suite and
+# Tag pushes (scripts/release.sh) build php-llamacpp for each suite and
 # attach every .deb to the one vX.Y.Z GitHub Release.
 
 run-name: Release - ${{ github.ref_name }}

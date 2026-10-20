@@ -19,7 +19,7 @@ cd php-llamacpp
 
 That script adds the roojs source for this suite, installs `libggml*` + `libllama*` plus the vulkan and blas backends, skips HIP on ROCm, and registers `/usr/lib/x86_64-linux-gnu/llama` with `ldconfig`.
 
-Build on **each host** against that host’s PHP — do not copy `llama.so` between machines.
+Build on **each host** against that host’s PHP — do not copy `llamacpp.so` between machines.
 
 ## Model files (not in this tree)
 
@@ -36,7 +36,7 @@ phpize
 make -j$(nproc)
 ```
 
-Output: `modules/llama.so`
+Output: `modules/llamacpp.so`
 
 Optional install:
 
@@ -47,7 +47,7 @@ sudo make install
 Or load without installing:
 
 ```bash
-php -d extension=$PWD/modules/llama.so test_llama.php \
+php -d extension=$PWD/modules/llamacpp.so test_llamacpp.php \
   /path/to/bge-m3-q4_k_m.gguf
 ```
 
@@ -55,11 +55,12 @@ Restart php-fpm / Apache after enabling for those SAPIs.
 
 ## Debian package
 
-`php-llama` is built per suite (Debian 13 `trixie`, Ubuntu 25.04 `plucky`, 25.10 `questing`, 26.04 `resolute`). `dh-php` registers the module and enables it for every SAPI of that suite's PHP — `cli`, `fpm`, `apache2`, and the rest — the same way packaged modules such as imagick do. A SAPI installed later enables registered modules on its own.
+Each suite build is a versioned PHP package: `php8.4-llamacpp` on Debian 13 (trixie) and Ubuntu 25.04/25.10 (plucky, questing), and `php8.5-llamacpp` on Ubuntu 26.04 (resolute). `dh-php` enables the `llamacpp` module for every SAPI of that PHP — `cli`, `fpm`, `apache2`, and the rest. A SAPI installed later picks the module up on its own.
 
 ```bash
-sudo apt-get install php-llama
-php -m | grep llama
+sudo apt-get install php8.4-llamacpp   # trixie, plucky, questing
+sudo apt-get install php8.5-llamacpp   # resolute
+php -m | grep llamacpp
 ```
 
 `scripts/release.sh` tags `vX.Y.Z` from `CHANGELOG.md` and pushes it. GitHub Actions builds the suite `.deb` files and attaches them all to that one release. The [roojs APT repository](https://roojs.github.io/repos/) can pull that release in later. Do not run the release script from an agent.
@@ -93,7 +94,7 @@ This project was developed with the assistance of artificial intelligence.
 
 Copyright (c) 2026 Roo J Solutions Ltd. Author: Leon <leon@roojs.com>.
 
-php-llama is distributed under the [PHP License, version 3.01](LICENSE), the same license used by PHP extensions.
+php-llamacpp is distributed under the [PHP License, version 3.01](LICENSE), the same license used by PHP extensions.
 
 Debian packages are maintained by Alan Knowles <alan@roojs.com>.
 

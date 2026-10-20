@@ -7,7 +7,7 @@
 set -euo pipefail
 
 MAINTAINER='Alan Knowles <alan@roojs.com>'
-PACKAGE='php-llama'
+PACKAGE='php-llamacpp'
 DISTRIBUTION='unstable'
 URGENCY='medium'
 

@@ -1,5 +1,5 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: php-llama
+Upstream-Name: php-llamacpp
 Upstream-Contact: Leon <leon@roojs.com>
 Source: https://github.com/roojs/php-llamacpp
 Comment: Author is Leon <leon@roojs.com>.

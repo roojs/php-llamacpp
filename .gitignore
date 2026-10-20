@@ -13,12 +13,12 @@
 *.la
 *.o
 *.dep
-llama.la
+llamacpp.la
 autom4te.cache/
 build/
 build-*/
-debian/php-llama.php
-debian/php-llama/
+debian/php[0-9]*-llamacpp.php
+debian/php[0-9]*-llamacpp/
 debian/.debhelper/
 debian/debhelper-build-stamp
 debian/files

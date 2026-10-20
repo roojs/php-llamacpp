@@ -36,7 +36,7 @@ override_dh_auto_configure:
 	for v in $(PHP_VERSIONS); do \
 		rm -rf "build-$$v"; \
 		mkdir "build-$$v"; \
-		cp config.m4 php_llama.c php_llama.h "build-$$v/"; \
+		cp config.m4 php_llamacpp.c php_llamacpp.h "build-$$v/"; \
 		( cd "build-$$v" && phpize$$v && ./configure --with-php-config="/usr/bin/php-config$$v" ); \
 	done
 
@@ -55,8 +55,13 @@ override_dh_auto_install:
 override_dh_php:
 	set -eu; \
 	for v in $(PHP_VERSIONS); do \
-		printf 'mod build-%s/modules/llama.so\nmod debian/llama.ini\n' "$$v" > debian/php-llama.php; \
-		dh_php -p php-llama --php-version="$$v"; \
+		pkg="php$${v}-llamacpp"; \
+		grep -qx "Package: $$pkg" debian/control || { \
+			echo "debian/control has no $$pkg; run scripts/release/set-debian-php-package.sh" >&2; \
+			exit 1; \
+		}; \
+		printf 'mod build-%s/modules/llamacpp.so\nmod debian/llamacpp.ini\n' "$$v" > "debian/$$pkg.php"; \
+		dh_php -p "$$pkg" --php-version="$$v"; \
 	done
 
 override_dh_shlibdeps:
@@ -64,9 +69,9 @@ override_dh_shlibdeps:
 
 override_dh_auto_clean:
 	rm -rf build-*
-	rm -f debian/php-llama.php
+	rm -f debian/php[0-9]*-llamacpp.php
 
 override_dh_clean:
 	rm -rf build-*
-	rm -f debian/php-llama.php
+	rm -f debian/php[0-9]*-llamacpp.php
 	dh_clean

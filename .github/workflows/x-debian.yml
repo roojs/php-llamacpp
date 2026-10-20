@@ -59,7 +59,8 @@ jobs:
           SUITE: ${{ matrix.suite }}
         run: |
           set -euo pipefail
-          chmod +x scripts/release/changelog.sh scripts/release/sync-debian-changelog.sh
+          chmod +x scripts/release/changelog.sh scripts/release/sync-debian-changelog.sh \
+            scripts/release/set-debian-php-package.sh
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             if cl_ver="$(./scripts/release/changelog.sh version 2>/dev/null)"; then
               tag_ver="${GITHUB_REF_NAME#v}"
@@ -74,8 +75,9 @@ jobs:
           else
             ./scripts/release/sync-debian-changelog.sh
           fi
-          # Keep the pool filename unique per suite. Same upstream version,
-          # different PHP / libc, so the Debian revision gains +suite.
+          # Binary package is php8.4-llamacpp or php8.5-llamacpp, from this
+          # image's PHP. +suite keeps the three 8.4 builds distinct.
+          ./scripts/release/set-debian-php-package.sh
           sed -i "1s/(\([^)]*\))/(\1+${SUITE})/" debian/changelog
           head -n 1 debian/changelog
           dpkg-buildpackage -us -uc -b
@@ -95,5 +97,5 @@ jobs:
       - name: Upload Debian artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: php-llama-${{ matrix.suite }}
+          name: php-llamacpp-${{ matrix.suite }}
           path: artifacts/*

@@ -10,21 +10,14 @@ Sibling repo at `gitlive/php-llamacpp` (used by Translate RAG local embed).
 - `build-essential`, `pkg-config`, `curl`
 - `libllama0` / `libllama-dev` (and ggml backends: vulkan, blas)
 
-On hosts where apt’s llama packages are too old or missing, install from Debian pools:
+Ubuntu 25.04 (`plucky`) does not ship `libllama`. Install the libc-matching builds from the [roojs APT repository](https://roojs.github.io/repos/) (Debian sid’s newest debs need glibc 2.43 and will not configure here):
 
 ```bash
 cd php-llamacpp
 ./scripts/fetch-libllama.sh
 ```
 
-That script downloads/installs `libggml*` + `libllama*` debs, skips HIP on ROCm, and registers `/usr/lib/*/llama` with `ldconfig`. Helper: `scripts/ci/debian-pool-deb.sh`.
-
-Optional (CLI smoke / `llama-server` only — not required to build this extension):
-
-```bash
-# match libllama version, e.g. from the same Debian llama.cpp pool
-# sudo dpkg -i llama.cpp-tools_….deb
-```
+That script adds the roojs source for this suite (`trixie`, `plucky`, `questing`, or `resolute`), installs `libggml*` + `libllama*` plus the vulkan and blas backends, skips HIP on ROCm, and registers `/usr/lib/*/llama` with `ldconfig`.
 
 Build on **each host** against that host’s PHP — do not copy `llama.so` between machines.
 

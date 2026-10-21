@@ -11,6 +11,10 @@ for git tags (`v0.1.0`).
 
 ## [0.1.1] - Unreleased
 
+### Changed
+
+- `LlamaEmbed::load()` stays on the CPU unless `llamacpp.n_gpu_layers` is set. `0` (default) uses no GPU memory; `-1` offloads every layer.
+
 ### Fixed
 
 - Link `llamacpp.so` against `libllama`. The 0.1.0 module did not depend on it, so PHP failed to load the extension (`undefined symbol: llama_model_n_embd_out`).

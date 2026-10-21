@@ -24,9 +24,37 @@
 #include "ext/standard/info.h"
 
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 
 zend_class_entry *php_llama_embed_ce;
+
+ZEND_BEGIN_MODULE_GLOBALS(llamacpp)
+	zend_long n_gpu_layers;
+ZEND_END_MODULE_GLOBALS(llamacpp)
+
+ZEND_DECLARE_MODULE_GLOBALS(llamacpp)
+
+#define LLAMACPP_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(llamacpp, v)
+
+/* 0 = CPU only. -1 = every layer on the GPU. N > 0 = that many layers. */
+PHP_INI_BEGIN()
+	STD_PHP_INI_ENTRY("llamacpp.n_gpu_layers", "0", PHP_INI_ALL, OnUpdateLong,
+		n_gpu_layers, zend_llamacpp_globals, llamacpp_globals)
+PHP_INI_END()
+
+static int32_t php_llama_n_gpu_layers(void)
+{
+	zend_long n = LLAMACPP_G(n_gpu_layers);
+
+	if (n > INT32_MAX) {
+		return INT32_MAX;
+	}
+	if (n < INT32_MIN) {
+		return INT32_MIN;
+	}
+	return (int32_t)n;
+}
 
 static zend_object_handlers php_llama_embed_object_handlers;
 static int php_llama_backend_ready = 0;
@@ -317,6 +345,8 @@ PHP_METHOD(LlamaEmbed, load)
 	php_llama_embed_object *intern;
 	struct llama_model_params mparams;
 	struct llama_context_params cparams;
+	ggml_backend_dev_t cpu_only[2] = { NULL, NULL };
+	int32_t n_gpu_layers;
 
 	ZEND_PARSE_PARAMETERS_START(1, 2)
 		Z_PARAM_STR(path)
@@ -324,9 +354,24 @@ PHP_METHOD(LlamaEmbed, load)
 		Z_PARAM_ARRAY_OR_NULL(options)
 	ZEND_PARSE_PARAMETERS_END();
 
+	if (!php_llama_backend_ready) {
+		llama_backend_init();
+		php_llama_backend_ready = 1;
+	}
+
+	n_gpu_layers = php_llama_n_gpu_layers();
 	mparams = llama_model_default_params();
-	/* -1 = all layers; no PHP override */
-	mparams.n_gpu_layers = -1;
+	mparams.n_gpu_layers = n_gpu_layers;
+	/* 0 keeps weights and the context off the GPU. Vulkan was OOMing at startup. */
+	if (n_gpu_layers == 0) {
+		ggml_backend_dev_t cpu = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);
+
+		if (cpu) {
+			cpu_only[0] = cpu;
+			cpu_only[1] = NULL;
+			mparams.devices = cpu_only;
+		}
+	}
 
 	object_init_ex(return_value, php_llama_embed_ce);
 	intern = (php_llama_embed_object *)((char *)(Z_OBJ_P(return_value))
@@ -338,11 +383,6 @@ PHP_METHOD(LlamaEmbed, load)
 		if (z) {
 			intern->debug = zend_is_true(z) ? 1 : 0;
 		}
-	}
-
-	if (!php_llama_backend_ready) {
-		llama_backend_init();
-		php_llama_backend_ready = 1;
 	}
 
 	intern->model = llama_model_load_from_file(ZSTR_VAL(path), mparams);
@@ -360,6 +400,10 @@ PHP_METHOD(LlamaEmbed, load)
 	cparams.n_ubatch = 4096;
 	cparams.n_ctx = 4096;
 	cparams.n_seq_max = PHP_LLAMA_EMBED_SEQ_MAX;
+	if (n_gpu_layers == 0) {
+		cparams.offload_kqv = false;
+		cparams.op_offload = false;
+	}
 
 	intern->ctx = llama_init_from_model(intern->model, cparams);
 	if (!intern->ctx) {
@@ -381,8 +425,9 @@ PHP_METHOD(LlamaEmbed, load)
 
 	if (intern->debug) {
 		fprintf(stderr,
-			"LlamaEmbed load: pooling=%d requested n_batch=%d n_ubatch=%d n_ctx=%d n_seq_max=%d; "
+			"LlamaEmbed load: n_gpu_layers=%d pooling=%d requested n_batch=%d n_ubatch=%d n_ctx=%d n_seq_max=%d; "
 			"actual n_batch=%u n_ubatch=%u n_ctx=%u n_seq_max=%u\n",
+			(int)n_gpu_layers,
 			(int)llama_pooling_type(intern->ctx),
 			(int)cparams.n_batch, (int)cparams.n_ubatch, (int)cparams.n_ctx, (int)cparams.n_seq_max,
 			llama_n_batch(intern->ctx), llama_n_ubatch(intern->ctx),
@@ -441,10 +486,19 @@ static const zend_function_entry llamacpp_functions[] = {
 	PHP_FE_END
 };
 
+static PHP_GINIT_FUNCTION(llamacpp)
+{
+#if defined(COMPILE_DL_LLAMACPP) && defined(ZTS)
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+	llamacpp_globals->n_gpu_layers = 0;
+}
+
 PHP_MINIT_FUNCTION(llamacpp)
 {
 	zend_class_entry ce;
 
+	REGISTER_INI_ENTRIES();
 	llama_log_set(php_llama_log_quiet, NULL);
 
 	INIT_CLASS_ENTRY(ce, "LlamaEmbed", php_llama_embed_methods);
@@ -465,6 +519,7 @@ PHP_MSHUTDOWN_FUNCTION(llamacpp)
 		llama_backend_free();
 		php_llama_backend_ready = 0;
 	}
+	UNREGISTER_INI_ENTRIES();
 	return SUCCESS;
 }
 
@@ -474,6 +529,8 @@ PHP_MINFO_FUNCTION(llamacpp)
 	php_info_print_table_header(2, "llamacpp support", "enabled");
 	php_info_print_table_row(2, "Version", PHP_LLAMACPP_VERSION);
 	php_info_print_table_end();
+
+	DISPLAY_INI_ENTRIES();
 }
 
 zend_module_entry llamacpp_module_entry = {
@@ -486,7 +543,11 @@ zend_module_entry llamacpp_module_entry = {
 	NULL,
 	PHP_MINFO(llamacpp),
 	PHP_LLAMACPP_VERSION,
-	STANDARD_MODULE_PROPERTIES
+	PHP_MODULE_GLOBALS(llamacpp),
+	PHP_GINIT(llamacpp),
+	NULL,
+	NULL,
+	STANDARD_MODULE_PROPERTIES_EX
 };
 
 #ifdef COMPILE_DL_LLAMACPP

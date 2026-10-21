@@ -28,6 +28,22 @@ $dim = $e->dimension();
 $vecs = $e->embedBatch([$a, $b]); // float[][], each L2-normalized
 ```
 
+## CPU and GPU
+
+`llamacpp.n_gpu_layers` controls how many layers go into VRAM. The default is `0`, so `LlamaEmbed::load()` stays on the CPU and does not allocate GPU memory.
+
+Set it in `php.ini` (the packaged file is `/etc/php/<version>/mods-available/llamacpp.ini`) or with `php -d`:
+
+| Value | Meaning |
+| --- | --- |
+| `0` | CPU only (default) |
+| `-1` | Every layer on the GPU |
+| `N` | That many layers on the GPU |
+
+```ini
+llamacpp.n_gpu_layers = -1
+```
+
 ## Artificial Intelligence Usage
 
 This project was developed with the assistance of artificial intelligence.

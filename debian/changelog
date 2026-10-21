@@ -1,3 +1,9 @@
+php-llamacpp (0.1.1-1) unstable; urgency=medium
+
+  * Link `llamacpp.so` against `libllama`. The 0.1.0 module did not depend on it, so PHP failed to load the extension (`undefined symbol: llama_model_n_embd_out`).
+
+ -- Alan Knowles <alan@roojs.com>  Tue, 20 Oct 2026 00:00:00 +0000
+
 php-llamacpp (0.1.0-1) unstable; urgency=medium
 
   * Initial release of the LlamaEmbed PHP extension

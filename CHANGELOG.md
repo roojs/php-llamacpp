@@ -9,7 +9,13 @@ for git tags (`v0.1.0`).
 `debian/changelog` is generated from this file at release time
 (`scripts/release/changelog.sh`).
 
-## [0.1.0] - Unreleased
+## [0.1.1] - Unreleased
+
+### Fixed
+
+- Link `llamacpp.so` against `libllama`. The 0.1.0 module did not depend on it, so PHP failed to load the extension (`undefined symbol: llama_model_n_embd_out`).
+
+## [0.1.0] - 2026-10-20
 
 ### Added
 

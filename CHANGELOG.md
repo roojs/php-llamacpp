@@ -9,7 +9,9 @@ for git tags (`v0.1.0`).
 `debian/changelog` is generated from this file at release time
 (`scripts/release/changelog.sh`).
 
-## [0.1.2] - Unreleased
+## [Unreleased]
+
+## [0.1.2] - 2026-10-21
 
 ### Changed
 

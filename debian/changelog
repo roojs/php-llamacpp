@@ -1,8 +1,20 @@
+php-llamacpp (UNRELEASED) unstable; urgency=medium
+
+  * Release Unreleased
+
+ -- Alan Knowles <alan@roojs.com>  Wed, 21 Oct 2026 00:00:00 +0000
+
+php-llamacpp (0.1.2-1) unstable; urgency=medium
+
+  * `LlamaEmbed::load()` stays on the CPU unless `llamacpp.n_gpu_layers` is set. `0` (default) uses no GPU memory; `-1` offloads every layer.
+
+ -- Alan Knowles <alan@roojs.com>  Wed, 21 Oct 2026 00:00:00 +0000
+
 php-llamacpp (0.1.1-1) unstable; urgency=medium
 
   * Link `llamacpp.so` against `libllama`. The 0.1.0 module did not depend on it, so PHP failed to load the extension (`undefined symbol: llama_model_n_embd_out`).
 
- -- Alan Knowles <alan@roojs.com>  Tue, 20 Oct 2026 00:00:00 +0000
+ -- Alan Knowles <alan@roojs.com>  Wed, 21 Oct 2026 00:00:00 +0000
 
 php-llamacpp (0.1.0-1) unstable; urgency=medium
 

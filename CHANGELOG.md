@@ -9,11 +9,13 @@ for git tags (`v0.1.0`).
 `debian/changelog` is generated from this file at release time
 (`scripts/release/changelog.sh`).
 
-## [0.1.1] - Unreleased
+## [0.1.2] - Unreleased
 
 ### Changed
 
 - `LlamaEmbed::load()` stays on the CPU unless `llamacpp.n_gpu_layers` is set. `0` (default) uses no GPU memory; `-1` offloads every layer.
+
+## [0.1.1] - 2026-10-21
 
 ### Fixed
 

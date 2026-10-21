@@ -20,7 +20,7 @@
 extern zend_module_entry llamacpp_module_entry;
 #define phpext_llamacpp_ptr &llamacpp_module_entry
 
-#define PHP_LLAMACPP_VERSION "0.1.0"
+#define PHP_LLAMACPP_VERSION "0.1.2"
 
 #include <llama.h>
 
